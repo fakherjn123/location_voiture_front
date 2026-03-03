@@ -41,12 +41,24 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <Link to="/" className="inline-flex items-center gap-2 group">
-            <span className="text-slate-900 text-xl font-extrabold tracking-tight group-hover:text-indigo-600 transition-colors">JNAYEH</span>
+            <span className="text-slate-900 text-xl font-extrabold tracking-tight group-hover:text-indigo-600 transition-colors">BMZ</span>
             <span className="w-px h-5 bg-slate-300" />
             <span className="text-slate-500 text-xs font-semibold tracking-widest">LOCATION</span>
           </Link>
         </div>
-
+        <div className="mt-4">
+          <a
+            href="http://localhost:3000/api/auth/google"
+            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3.5 px-4 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="google"
+              className="w-5 h-5"
+            />
+            Continue with Google
+          </a>
+        </div>
         <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <h1 className="text-slate-900 text-2xl font-extrabold mb-1 tracking-tight">
             Welcome back
@@ -78,7 +90,7 @@ export default function LoginPage() {
                 required
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="âDT¢âDT¢âDT¢âDT¢âDT¢âDT¢âDT¢âDT¢"
                 className={inputClass}
               />
             </div>

@@ -9,7 +9,7 @@ function StatCard({ label, value, note, accentClass = "bg-slate-900" }) {
         <div className={`w-2.5 h-2.5 rounded-full mt-1 ${accentClass}`} />
       </div>
       <div className="text-slate-900 text-3xl font-extrabold tracking-tight leading-none">
-        {value ?? <span className="text-slate-300">â€”</span>}
+        {value ?? <span className="text-slate-300">âDT”</span>}
       </div>
       {note && <div className="text-slate-500 text-xs mt-2">{note}</div>}
     </div>
@@ -108,8 +108,8 @@ export default function DashboardPage() {
           <a href="/admin/factures" className="text-slate-600 text-sm font-medium px-5 py-2.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm">
             All invoices &rarr;
           </a>
-          <a href="/" className="text-slate-600 text-sm font-medium px-5 py-2.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm">
-            Browse fleet &rarr;
+          <a href="/admin/rentals" className="text-slate-600 text-sm font-medium px-5 py-2.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm">
+            Manage rentals &rarr;
           </a>
         </div>
       </div>

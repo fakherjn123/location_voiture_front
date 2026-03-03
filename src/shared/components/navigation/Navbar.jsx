@@ -15,7 +15,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="text-slate-900 text-lg font-extrabold tracking-tight group-hover:text-indigo-600 transition-colors">JNAYEH</span>
+          <span className="text-slate-900 text-lg font-extrabold tracking-tight group-hover:text-indigo-600 transition-colors">BMZ</span>
           <span className="w-px h-4 bg-slate-300" />
           <span className="text-slate-500 text-xs font-semibold tracking-widest">LOCATION</span>
         </Link>
@@ -25,7 +25,7 @@ export default function Navbar() {
           {[
             { to: "/", label: "Fleet" },
 
-            ...(user
+            ...(user?.role === "client" || (user && user.role !== "admin")
               ? [
                 { to: "/rentals", label: "My Rentals" },
                 { to: "/facture", label: "Invoices" },
@@ -34,10 +34,14 @@ export default function Navbar() {
 
             ...(user?.role === "admin"
               ? [
-                { to: "/admin/cars", label: "Manage Cars" },
                 { to: "/dashboard", label: "Dashboard" },
-                { to: "/admin/factures", label: "All Invoices" },
+                { to: "/admin/cars", label: "Cars" },
+                { to: "/admin/rentals", label: "Rentals" },
                 { to: "/admin/payments", label: "Payments" },
+                { to: "/admin/factures", label: "Invoices" },
+                { to: "/admin/services", label: "Services" },
+                { to: "/admin/reports", label: "Reports" },
+                { to: "/admin/clients", label: "Clients" },
               ]
               : []),
           ].map(({ to, label }) => (
@@ -45,8 +49,8 @@ export default function Navbar() {
               key={to}
               to={to}
               className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive(to)
-                  ? "bg-slate-100 text-slate-900"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                ? "bg-slate-100 text-slate-900"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 }`}
             >
               {label}
