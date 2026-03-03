@@ -41,7 +41,7 @@ export default function CarDetailPage() {
     setSubmitting(true);
     try {
       const res = await api.post("/rentals", { car_id: Number(id), start_date: startDate, end_date: endDate });
-      setMessage({ type: "success", text: `Booking recorded â€” ${res.data.final_total} TND` });
+      setMessage({ type: "success", text: `Booking recorded âDT” ${res.data.final_total} TND` });
       setTimeout(() => navigate(`/payment/${res.data.rental.id}`), 2000);
     } catch (err) {
       setMessage({ type: "error", text: err.response?.data?.message || "Booking failed." });
@@ -212,7 +212,7 @@ export default function CarDetailPage() {
           </div>
         </div>
 
-        {/* Right â€” Booking */}
+        {/* Right âDT” Booking */}
         <div>
           <div style={{
             background: "#fff", border: "1px solid #ebebeb", borderRadius: 12,
