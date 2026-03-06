@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getClients } from './api/client.service';
 
 const Clients = () => {
+    const navigate = useNavigate();
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -67,7 +69,9 @@ const Clients = () => {
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Client</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Rôle</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actions</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Locations</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dépenses</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -87,7 +91,10 @@ const Clients = () => {
                                 </tr>
                             ) : (
                                 filtered.map((client) => (
-                                    <tr key={client.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer">
+                                    <tr key={client.id}
+                                        onClick={() => navigate(`/admin/clients/${client.id}`, { state: { client } })}
+                                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -105,6 +112,20 @@ const Clients = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{client.total_rentals || 0}</span>
+                                                <span className="text-xs text-slate-500">Voitures</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                                                    {Number(client.total_spent || 0).toLocaleString('fr-FR')} TND
+                                                </span>
+                                                <span className="text-xs text-slate-500">Payé</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <button className="text-slate-400 hover:text-primary dark:hover:text-slate-100 transition-colors">
                                                 <span className="material-symbols-outlined">more_vert</span>
                                             </button>

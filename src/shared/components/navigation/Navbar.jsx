@@ -36,6 +36,7 @@ export default function Navbar() {
       ? [
         { to: "/dashboard", label: "Dashboard", icon: "📊" },
         { to: "/admin/cars", label: "Cars", icon: "🏎️" },
+        { to: "/admin/clients", label: "Clients", icon: "👥" },
         { to: "/admin/payments", label: "Payments", icon: "💳" },
         { to: "/admin/factures", label: "Financials", icon: "💰" },
         { to: "/admin/reviews", label: "Reviews", icon: "⭐" },

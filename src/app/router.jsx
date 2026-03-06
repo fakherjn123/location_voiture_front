@@ -13,6 +13,8 @@ import MyFacturesPage from "../features/factures/pages/MyFacturesPage";
 import AllFacturesPage from "../features/admin/pages/AllFacturesPage";
 import ManagerPaymentsPage from "../features/admin/pages/ManagePaymentsPage";
 import ReviewsPage from "../pages/Admin/Reviews";
+import ClientsPage from "../pages/Admin/Clients";
+import ClientDetail from "../pages/Admin/ClientDetail";
 
 export default function Router() {
   return (
@@ -54,6 +56,12 @@ export default function Router() {
         } />
         <Route path="/admin/reviews" element={
           <ProtectedRoute role="admin"><ReviewsPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/clients" element={
+          <ProtectedRoute role="admin"><ClientsPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/clients/:id" element={
+          <ProtectedRoute role="admin"><ClientDetail /></ProtectedRoute>
         } />
 
         {/* FALLBACKS */}
