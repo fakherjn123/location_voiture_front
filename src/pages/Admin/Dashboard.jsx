@@ -6,7 +6,7 @@ import {
   PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from 'recharts';
 import { getDashboardStats, getFinancialStats, getTopCars } from './api/report.service';
-import { generateDashboardInsights } from '../../features/reviews/api/ai.service';
+import api from '../../config/api.config';
 
 // ── Colour tokens ────────────────────────────────────────────
 const C = {
@@ -159,7 +159,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
-  const [aiData, setAiData] = useState(null);
+
+  // Real AI Insights states
+  const [realAiData, setRealAiData] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
 
   useEffect(() => {
     injectDashStyles();
@@ -172,9 +176,6 @@ export default function Dashboard() {
         setFinancial(fRes.data);
         setTopCars(tRes.data || []);
         setMonthlyData(buildMonthlyData(fRes.data?.current_month_revenue));
-        // Generate AI insights
-        const ai = generateDashboardInsights(sRes.data, fRes.data);
-        setAiData(ai);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     })();
@@ -191,24 +192,19 @@ export default function Dashboard() {
     value: Number(c.total_rentals),
   }));
 
-  // ── AI Analytics data ──────────────────────────────────
-  const sentimentData = [
-    { subject: 'Confort', A: 85 + Math.floor(Math.random() * 10), fullMark: 100 },
-    { subject: 'Propreté', A: 78 + Math.floor(Math.random() * 15), fullMark: 100 },
-    { subject: 'Rapport Q/P', A: 70 + Math.floor(Math.random() * 20), fullMark: 100 },
-    { subject: 'Service', A: 80 + Math.floor(Math.random() * 10), fullMark: 100 },
-    { subject: 'Ponctualité', A: 82 + Math.floor(Math.random() * 12), fullMark: 100 },
-    { subject: 'État Véhicule', A: 75 + Math.floor(Math.random() * 18), fullMark: 100 },
-  ];
-
-  const demandForecast = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'].map((m, i) => {
-    const base = 15 + Math.sin(i * 0.8) * 8;
-    return {
-      month: m,
-      actual: i <= new Date().getMonth() ? Math.round(base + Math.random() * 6) : null,
-      predicted: Math.round(base + Math.random() * 4 + 2),
-    };
-  });
+  const fetchRealAiInsights = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await api.get('/dashboard/insights');
+      setRealAiData(res.data.insights);
+    } catch (err) {
+      console.error(err);
+      setAiError("Erreur lors de la génération avec l'IA. Veuillez réessayer.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const tabs = ['overview', 'revenue', 'fleet', 'ai-analytics', 'activity'];
   const tabLabels = { overview: 'Vue d\'ensemble', revenue: 'Revenus', fleet: 'Flotte', 'ai-analytics': '🤖 IA Analytics', activity: 'Activité' };
@@ -494,159 +490,107 @@ export default function Dashboard() {
           {activeTab === 'ai-analytics' && (
             <div className="chart-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-              {/* AI Insights & Recommendations */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                {/* Insights */}
-                <div style={{
-                  background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 16, padding: '20px 24px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: 'rgba(200,169,110,0.15)', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                    }}>🧠</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>Analyses IA</div>
-                      <div style={{ fontSize: 10, color: C.muted, letterSpacing: '0.06em' }}>INSIGHTS EN TEMPS RÉEL</div>
-                    </div>
+              {/* Header & Button */}
+              <div style={{
+                background: C.surface, border: `1px solid ${C.border}`,
+                borderRadius: 16, padding: '24px', display: 'flex',
+                alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16
+              }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: C.text, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 24 }}>🧠</span> Analyse Stratégique par IA
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {(aiData?.insights || []).map((insight, i) => (
-                      <div key={i} className="ai-insight-item" style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        border: `1px solid ${C.border}`,
-                        borderRadius: 10, padding: '12px 14px',
-                        fontSize: 13, color: C.text, lineHeight: 1.5,
-                        animationDelay: `${i * 0.1}s`,
-                      }}>
-                        {insight}
-                      </div>
-                    ))}
+                  <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
+                    Générez des prévisions et conseils basés sur les vraies données de votre agence (Google Gemini).
                   </div>
                 </div>
 
-                {/* Recommendations */}
-                <div style={{
-                  background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 16, padding: '20px 24px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: 'rgba(99,102,241,0.15)', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                    }}>💡</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>Recommandations IA</div>
-                      <div style={{ fontSize: 10, color: C.muted, letterSpacing: '0.06em' }}>ACTIONS SUGGÉRÉES</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {(aiData?.recommendations || []).map((rec, i) => (
-                      <div key={i} className="ai-insight-item" style={{
-                        background: 'rgba(99,102,241,0.05)',
-                        border: `1px solid rgba(99,102,241,0.15)`,
-                        borderLeft: `3px solid ${C.primary}`,
-                        borderRadius: '0 10px 10px 0', padding: '12px 14px',
-                        fontSize: 13, color: C.text, lineHeight: 1.5,
-                        animationDelay: `${i * 0.1 + 0.2}s`,
-                      }}>
-                        {rec}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <button
+                  onClick={fetchRealAiInsights}
+                  disabled={aiLoading}
+                  style={{
+                    background: aiLoading ? '#334155' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12,
+                    fontSize: 14, fontWeight: 700, cursor: aiLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    boxShadow: aiLoading ? 'none' : '0 4px 15px rgba(99,102,241,0.3)',
+                    transition: 'all .2s'
+                  }}
+                >
+                  {aiLoading ? 'Analyse en cours...' : '✨ Générer l\'Analyse IA'}
+                </button>
               </div>
 
-              {/* Charts row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                {/* Sentiment Radar */}
-                <div style={{
-                  background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 16, padding: '20px 24px',
-                }}>
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}>Analyse Sentiment Clients</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>Basée sur les avis récents</div>
-                  </div>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <RadarChart data={sentimentData}>
-                      <PolarGrid stroke={C.border} />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: C.muted, fontSize: 11 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                      <Radar name="Score" dataKey="A" stroke={C.gold} fill={C.gold} fillOpacity={0.2} strokeWidth={2} />
-                    </RadarChart>
-                  </ResponsiveContainer>
+              {aiError && (
+                <div style={{ background: 'rgba(244,63,94,0.1)', border: `1px solid rgba(244,63,94,0.2)`, borderRadius: 12, padding: 16, color: C.danger, fontSize: 14 }}>
+                  ⚠️ {aiError}
                 </div>
+              )}
 
-                {/* Demand Forecast */}
-                <div style={{
-                  background: C.surface, border: `1px solid ${C.border}`,
-                  borderRadius: 16, padding: '20px 24px',
-                }}>
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}>Prévision de Demande IA</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>Réel vs Prédiction</div>
-                  </div>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={demandForecast}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                      <XAxis dataKey="month" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: C.muted, fontSize: 12 }} />
-                      <Line type="monotone" dataKey="actual" name="Réel" stroke={C.primary} strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} />
-                      <Line type="monotone" dataKey="predicted" name="Prédiction IA" stroke={C.gold} strokeWidth={2} strokeDasharray="6 3" dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
+              {/* Loader Skeleton */}
+              {aiLoading && (
+                <div style={{ padding: 40, textAlign: 'center', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 16, background: C.surface }}>
+                  <div className="ai-spinner" style={{
+                    width: 30, height: 30, border: '3px solid rgba(255,255,255,0.1)',
+                    borderTop: `3px solid ${C.primary}`, borderRadius: '50%', margin: '0 auto 16px',
+                    animation: 'aiSpin 1s linear infinite'
+                  }} />
+                  L'IA Gemini analyse votre flotte et vos revenus...
                 </div>
-              </div>
+              )}
 
-              {/* AI Prediction Cards */}
-              {aiData?.predictions && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-                  <div style={{
-                    background: `linear-gradient(135deg, rgba(200,169,110,0.08), rgba(200,169,110,0.02))`,
-                    border: `1px solid rgba(200,169,110,0.2)`,
-                    borderRadius: 14, padding: '18px 20px',
-                  }}>
-                    <div style={{ color: C.muted, fontSize: 10, letterSpacing: '0.08em', marginBottom: 6 }}>REVENU PRÉVU (MOIS PROCHAIN)</div>
-                    <div style={{ color: C.text, fontSize: 24, fontWeight: 800 }}>
-                      <AnimatedValue value={aiData.predictions.nextMonthRevenue} /> DT
+              {/* Real AI Data Results */}
+              {realAiData && !aiLoading && (
+                <>
+                  {/* AI Chart - Revenue Forecast */}
+                  {realAiData.chartData?.length > 0 && (
+                    <div style={{
+                      background: C.surface, border: `1px solid ${C.border}`,
+                      borderRadius: 16, padding: '24px',
+                    }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>📊 Prévision des Revenus (IA)</div>
+                      <div style={{ fontSize: 12, color: C.muted, marginBottom: 20 }}>Estimation sur les 3 prochains mois selon la tendance actuelle</div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart data={realAiData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
+                          <XAxis dataKey="name" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                          <Bar dataKey="revenue" name="Projection Revenus (DT)" fill={C.primary} radius={[6, 6, 0, 0]} maxBarSize={40} />
+                          <Bar dataKey="target" name="Objectif Idéal (DT)" fill={C.accent} opacity={0.6} radius={[6, 6, 0, 0]} maxBarSize={40} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
-                    <div style={{ color: C.gold, fontSize: 11, marginTop: 4 }}>
-                      Confiance: {aiData.predictions.confidence}%
+                  )}
+
+                  {/* AI Advice Cards */}
+                  {realAiData.insights?.length > 0 && (
+                    <div style={{
+                      background: C.surface, border: `1px solid ${C.border}`,
+                      borderRadius: 16, padding: '24px',
+                    }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: C.gold }}>
+                        💡 Recommandations Locatives (Générées par l'IA)
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
+                        {realAiData.insights.map((insight, idx) => (
+                          <div key={idx} style={{
+                            background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
+                            borderLeft: `3px solid ${[C.primary, C.gold, C.accent][idx % 3]}`,
+                            borderRadius: '0 12px 12px 0', padding: '16px 20px',
+                            display: 'flex', gap: 16, alignItems: 'flex-start'
+                          }}>
+                            <div style={{ fontSize: 24 }}>{['🎯', '🚀', '💡', '🛡️'][idx % 4]}</div>
+                            <div>
+                              <div style={{ color: C.text, fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{insight.title}</div>
+                              <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>{insight.description}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{
-                    background: `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02))`,
-                    border: `1px solid rgba(99,102,241,0.2)`,
-                    borderRadius: 14, padding: '18px 20px',
-                  }}>
-                    <div style={{ color: C.muted, fontSize: 10, letterSpacing: '0.08em', marginBottom: 6 }}>LOCATIONS PRÉVUES</div>
-                    <div style={{ color: C.text, fontSize: 24, fontWeight: 800 }}>
-                      <AnimatedValue value={aiData.predictions.nextMonthRentals} />
-                    </div>
-                    <div style={{ color: C.primary, fontSize: 11, marginTop: 4 }}>
-                      Tendance: {aiData.predictions.demandTrend}
-                    </div>
-                  </div>
-                  <div style={{
-                    background: `linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))`,
-                    border: `1px solid rgba(16,185,129,0.2)`,
-                    borderRadius: 14, padding: '18px 20px',
-                  }}>
-                    <div style={{ color: C.muted, fontSize: 10, letterSpacing: '0.08em', marginBottom: 6 }}>SCORE FLOTTE IA</div>
-                    <div style={{ color: C.text, fontSize: 24, fontWeight: 800 }}>
-                      <AnimatedValue value={Math.round(70 + Math.random() * 25)} />/100
-                    </div>
-                    <div style={{ color: C.success, fontSize: 11, marginTop: 4 }}>
-                      Santé de la flotte
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}

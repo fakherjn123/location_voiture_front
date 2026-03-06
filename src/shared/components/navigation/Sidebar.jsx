@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 const NAV = [
-  { to: '/admin/dashboard', icon: 'grid_view',    label: 'Dashboard' },
-  { to: '/admin/cars',      icon: 'garage',        label: 'Flotte' },
-  { to: '/admin/contracts', icon: 'description',   label: 'Contrats' },
-  { to: '/admin/invoices',  icon: 'receipt_long',  label: 'Factures' },
-  { to: '/admin/services',  icon: 'build_circle',  label: 'Maintenance' },
-  { to: '/admin/clients',   icon: 'group',         label: 'Clients' },
+  { to: '/admin/dashboard', icon: 'grid_view', label: 'Dashboard' },
+  { to: '/admin/ai-dashboard', icon: 'psychology', label: 'Analyse IA' },
+  { to: '/admin/cars', icon: 'garage', label: 'Flotte' },
+  { to: '/admin/contracts', icon: 'description', label: 'Contrats' },
+  { to: '/admin/invoices', icon: 'receipt_long', label: 'Factures' },
+  { to: '/admin/services', icon: 'build_circle', label: 'Maintenance' },
+  { to: '/admin/clients', icon: 'group', label: 'Clients' },
 ];
 
 const REPORTS = [
-  { to: '/admin/reports',           icon: 'bar_chart',      label: 'Performance' },
-  { to: '/admin/reports/export',    icon: 'picture_as_pdf', label: 'Export PDF' },
-  { to: '/admin/reports/forecasts', icon: 'trending_up',    label: 'Prévisions' },
+  { to: '/admin/reports', icon: 'bar_chart', label: 'Performance' },
+  { to: '/admin/reports/export', icon: 'picture_as_pdf', label: 'Export PDF' },
+  { to: '/admin/reports/forecasts', icon: 'trending_up', label: 'Prévisions' },
 ];
 
 export default function Sidebar() {
