@@ -6,7 +6,7 @@ import CarDetailPage from "../features/cars/pages/CarDetailPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import CarsPage from "../features/cars/pages/CarsPage";
 import LoginPage from "../features/auth/pages/LoginPage";
-import DashboardPage from "../features/admin/pages/DashboardPage";
+import DashboardPage from "../pages/Admin/Dashboard"; // Use the main Feature Dashboard
 import MyRentalsPage from "../features/rentals/pages/MyRentalsPage";
 import PaymentPage from "../features/payments/pages/PaymentPage";
 import MyFacturesPage from "../features/factures/pages/MyFacturesPage";

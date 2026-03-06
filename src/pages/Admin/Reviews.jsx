@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../config/api.config";
-import { generateReviewReply, simulateSendEmail, analyzeSentiment } from "../../features/reviews/api/ai.service";
+import { generateReviewReply, analyzeSentiment } from "../../features/reviews/api/ai.service";
 
 /* ─── Typing Indicator ────────────────────────────────────── */
 const TypingIndicator = () => (
@@ -74,15 +74,18 @@ const ReviewRow = ({ review, onAiReply }) => {
         setSending(true);
         setSendError(null);
         try {
-            const result = await simulateSendEmail(review.user_email || review.user_name, aiReply);
-            if (result.success) {
+            const res = await api.post("/reviews/manual-reply", {
+                review_id: review.id,
+                reply_text: aiReply
+            });
+            if (res.status === 200) {
                 setSent(true);
                 if (onAiReply) onAiReply();
             } else {
-                setSendError(result.message);
+                setSendError("Erreur lors de l'envoi");
             }
         } catch (e) {
-            setSendError('Erreur réseau');
+            setSendError(e.response?.data?.message || 'Erreur réseau');
         }
         setSending(false);
     };
