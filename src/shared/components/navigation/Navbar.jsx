@@ -42,6 +42,7 @@ export default function Navbar() {
         { to: "/admin/factures", label: "Invoices" },
         { to: "/admin/services", label: "Maintenance" },
         { to: "/admin/reviews", label: "Reviews" },
+        { to: "/admin/hero", label: "Hero" },
       ]
       : []),
   ];
