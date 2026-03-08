@@ -19,6 +19,7 @@ import ReviewsPage from "../features/admin/pages/ReviewsPage";
 import ClientsPage from "../features/admin/pages/ClientsPage";
 import ClientDetailPage from "../features/admin/pages/ClientDetailPage";
 import ServicesPage from "../features/admin/pages/ServicesPage";
+import HeroBannerPage from "../features/admin/pages/HeroBannerPage";
 
 export default function Router() {
   return (
@@ -76,6 +77,9 @@ export default function Router() {
         } />
         <Route path="/admin/clients/:id" element={
           <ProtectedRoute role="admin"><ClientDetailPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/hero" element={
+          <ProtectedRoute role="admin"><HeroBannerPage /></ProtectedRoute>
         } />
 
         {/* FALLBACKS */}

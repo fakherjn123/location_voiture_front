@@ -142,6 +142,8 @@ function CarCard({ car, index }) {
 /* ─── Main Page ───────────────────────────────────────────── */
 export default function CarsPage() {
   const [cars, setCars] = useState([]);
+  const [heroImages, setHeroImages] = useState([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ brand: "", maxPrice: "" });
   const [activeFilter, setActiveFilter] = useState('all');
@@ -150,7 +152,26 @@ export default function CarsPage() {
   useEffect(() => {
     injectCarsStyles();
     fetchCars();
+    fetchHeroImages();
   }, []);
+
+  useEffect(() => {
+    if (heroImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentHeroIndex((prev) => (prev + 1) % heroImages.length);
+      }, 6000);
+      return () => clearInterval(interval);
+    }
+  }, [heroImages]);
+
+  const fetchHeroImages = async () => {
+    try {
+      const { data } = await api.get("/hero");
+      setHeroImages(data);
+    } catch (err) {
+      console.error("Hero fetch error:", err);
+    }
+  };
 
   const fetchCars = async () => {
     setLoading(true);
@@ -197,89 +218,124 @@ export default function CarsPage() {
 
       {/* ── Hero Section ──────────────────────────────── */}
       <div ref={heroRef} style={{
-        padding: "72px 40px 56px", maxWidth: 1200, margin: "0 auto",
-        position: 'relative', overflow: 'hidden',
+        padding: "100px 40px 80px", maxWidth: 1280, margin: "20px auto 40px",
+        position: 'relative', overflow: 'hidden', borderRadius: 40,
+        background: '#000', minHeight: 480, display: 'flex', alignItems: 'center'
       }}>
-        {/* Floating dots */}
-        {dots.map((d, i) => (
-          <div key={i} className="hero-dot" style={{
-            left: d.left, top: d.top,
-            width: d.size, height: d.size,
-            '--dx': d.dx, '--dy': d.dy,
-            animationDelay: d.delay,
+        {/* Dynamic Backgrounds */}
+        {heroImages.length > 0 ? (
+          heroImages.map((img, i) => (
+            <div key={img.id} style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(http://localhost:3000${img.image_url})`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              transition: 'opacity 1.5s ease-in-out, transform 10s linear',
+              opacity: currentHeroIndex === i ? 0.6 : 0,
+              transform: currentHeroIndex === i ? 'scale(1.1)' : 'scale(1)',
+              zIndex: 0
+            }} />
+          ))
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=1920)`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.4, zIndex: 0
           }} />
-        ))}
+        )}
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Overlay gradient */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
+          zIndex: 1
+        }} />
+
+        {/* Floating dots */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
+          {dots.map((d, i) => (
+            <div key={i} className="hero-dot" style={{
+              left: d.left, top: d.top,
+              width: d.size, height: d.size,
+              '--dx': d.dx, '--dy': d.dy,
+              animationDelay: d.delay,
+              background: 'rgba(255,255,255,0.2)'
+            }} />
+          ))}
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 800 }}>
           <p style={{
-            color: "#bbb", fontSize: 12, fontWeight: 700,
-            textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 16,
-            display: 'flex', alignItems: 'center', gap: 8,
+            color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: 800,
+            textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 20,
+            display: 'flex', alignItems: 'center', gap: 12,
+            animation: 'fadeIn 0.8s ease both'
           }}>
-            <span style={{ width: 24, height: 1, background: '#ddd', display: 'inline-block' }} />
-            Available Fleet
+            <span style={{ width: 32, height: 2, background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+            Premium Fleet {heroImages.length > 0 && `· 0${currentHeroIndex + 1}`}
           </p>
 
           <h1 style={{
-            fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 900, margin: "0 0 12px",
-            letterSpacing: "-0.03em", lineHeight: 1.05,
+            fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 950, margin: "0 0 20px",
+            letterSpacing: "-0.04em", lineHeight: 1, color: '#fff',
+            animation: 'fadeUp 0.8s ease both .1s'
           }}>
-            <span style={{ color: '#000' }}>Find your</span><br />
+            Find your<br />
             <span style={{
-              background: 'linear-gradient(135deg, #000 0%, #333 40%, #888 80%, #000 100%)',
-              backgroundSize: '200% 200%',
-              animation: 'gradientText 6s ease infinite',
+              background: 'linear-gradient(135deg, #fff 0%, #aaa 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>perfect car</span>
           </h1>
 
-          <p style={{ color: '#999', fontSize: 15, maxWidth: 440, lineHeight: 1.7, margin: '0 0 36px' }}>
-            Explore our premium fleet of vehicles. Each car is meticulously maintained for your comfort and safety.
+          <p style={{
+            color: 'rgba(255,255,255,0.7)', fontSize: 17, maxWidth: 480,
+            lineHeight: 1.6, margin: '0 0 44px', fontWeight: 500,
+            animation: 'fadeUp 0.8s ease both .2s'
+          }}>
+            Explore our meticulously maintained collection of premium vehicles for your ultimate driving experience.
           </p>
 
           {/* Search Bar */}
           <div style={{
             display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center",
-            background: '#fff', border: '1px solid #ebebeb', borderRadius: 18,
-            padding: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 24, padding: 10, backdropFilter: 'blur(20px)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            animation: 'fadeUp 0.8s ease both .3s'
           }}>
             <div style={{ position: 'relative', flex: 1 }}>
-              <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}><Search size={16} className="text-slate-400" /></span>
+              <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}><Search size={18} className="text-white/40" /></span>
               <input
-                placeholder="Search brand (e.g. BMW)"
+                placeholder="Search brand..."
                 value={filters.brand}
                 onChange={e => setFilters({ ...filters, brand: e.target.value })}
-                style={{ ...inputStyle, border: 'none', paddingLeft: 42, background: 'transparent' }}
-                onFocus={e => e.target.style.boxShadow = 'none'}
-                onBlur={e => e.target.style.boxShadow = 'none'}
+                style={{ ...inputStyle, border: 'none', paddingLeft: 46, background: 'transparent', color: '#fff' }}
               />
             </div>
-            <div style={{ width: 1, height: 28, background: '#f0f0f0' }} />
+            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)' }} />
             <div style={{ position: 'relative', flex: 1 }}>
-              <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}><DollarSign size={16} className="text-slate-400" /></span>
+              <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}><DollarSign size={18} className="text-white/40" /></span>
               <input
                 type="number"
                 placeholder="Max price (TND)"
                 value={filters.maxPrice}
                 onChange={e => setFilters({ ...filters, maxPrice: e.target.value })}
-                style={{ ...inputStyle, border: 'none', paddingLeft: 42, background: 'transparent' }}
-                onFocus={e => e.target.style.boxShadow = 'none'}
-                onBlur={e => e.target.style.boxShadow = 'none'}
+                style={{ ...inputStyle, border: 'none', paddingLeft: 46, background: 'transparent', color: '#fff' }}
               />
             </div>
             <button
               onClick={fetchCars}
               style={{
-                padding: "14px 36px", background: "#000", color: "#fff",
-                border: "none", borderRadius: 12, fontWeight: 800,
-                fontSize: 13, cursor: "pointer", transition: "all 0.2s",
+                padding: "16px 40px", background: "#fff", color: "#000",
+                border: "none", borderRadius: 16, fontWeight: 900,
+                fontSize: 14, cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 letterSpacing: '-0.01em', flexShrink: 0,
               }}
-              onMouseEnter={e => { e.target.style.opacity = "0.85"; e.target.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.target.style.opacity = "1"; e.target.style.transform = 'none'; }}
+              onMouseEnter={e => { e.target.style.transform = 'scale(1.02) translateY(-2px)'; e.target.style.background = '#f0f0f0'; }}
+              onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.background = '#fff'; }}
             >
-              Explore →
+              Explore Now →
             </button>
           </div>
         </div>
