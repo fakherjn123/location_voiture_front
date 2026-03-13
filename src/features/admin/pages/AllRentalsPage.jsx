@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../config/api.config";
-import { Car, Calendar, Clock, CreditCard, ChevronRight, Activity, CalendarDays, Key } from "lucide-react";
+import { Car, Calendar, Clock, CreditCard, ChevronRight, Activity, CalendarDays, Key, XCircle } from "lucide-react";
 
 const STATUS = {
     confirmed: { color: "text-sky-600", bg: "bg-sky-50", label: "Confirmée" },
@@ -15,6 +15,7 @@ export default function AllRentalsPage() {
     const navigate = useNavigate();
     const [rentals, setRentals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [cancellingId, setCancellingId] = useState(null);
 
     useEffect(() => {
         setLoading(true);
@@ -23,6 +24,19 @@ export default function AllRentalsPage() {
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, []);
+
+    const cancelRental = async (rentalId) => {
+        if (!window.confirm("Voulez-vous vraiment annuler cette réservation ?")) return;
+        setCancellingId(rentalId);
+        try {
+            await api.put(`/rentals/admin/cancel/${rentalId}`);
+            setRentals(prev => prev.map(r => r.id === rentalId ? { ...r, status: 'cancelled' } : r));
+        } catch (err) {
+            alert(err.response?.data?.message || "Erreur lors de l'annulation.");
+        } finally {
+            setCancellingId(null);
+        }
+    };
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -152,6 +166,19 @@ export default function AllRentalsPage() {
                                         </div>
                                     </div>
 
+                                    {/* Cancel button - only for active rentals */}
+                                    {rental.status !== 'cancelled' && rental.status !== 'completed' && (
+                                        <div className="px-5 pb-4">
+                                            <button
+                                                onClick={() => cancelRental(rental.id)}
+                                                disabled={cancellingId === rental.id}
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                                {cancellingId === rental.id ? "Annulation..." : "Annuler la réservation"}
+                                            </button>
+                                        </div>
+                                    )}
 
                                 </div>
                             );

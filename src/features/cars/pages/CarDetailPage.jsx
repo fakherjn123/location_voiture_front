@@ -57,17 +57,33 @@ export default function CarDetailPage() {
       .then(r => setReviews(r.data))
       .catch(console.error);
     api.get(`/rentals/dates/${carId}`)
-      .then(r => setBookedDates(r.data))
+      .then(r => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const upcoming = (r.data || []).filter(d => new Date(d.end) >= today);
+        setBookedDates(upcoming);
+      })
       .catch(console.error);
   }, [id]);
+
+  useEffect(() => {
+    if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+      setEndDate("");
+    }
+  }, [startDate]);
 
   const days = startDate && endDate
     ? Math.max(0, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000))
     : 0;
   const estimated = car ? (days * car.price_per_day).toFixed(2) : 0;
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
   const rentCar = async () => {
     if (!startDate || !endDate) return setMessage({ type: "error", text: "Veuillez sélectionner les dates." });
+    if (new Date(startDate) < today) return setMessage({ type: "error", text: "La date de prise en charge ne peut pas être dans le passé." });
     if (new Date(endDate) <= new Date(startDate)) return setMessage({ type: "error", text: "La date de retour doit être après la date de prise en charge." });
     setSubmitting(true);
     try {
@@ -347,6 +363,7 @@ export default function CarDetailPage() {
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Pick-up date</label>
               <input type="date" value={startDate}
+                min={todayStr}
                 onChange={e => setStartDate(e.target.value)} style={inputStyle}
                 onFocus={e => e.target.style.borderColor = '#0a0a0a'}
                 onBlur={e => e.target.style.borderColor = '#e8e8e8'}
@@ -356,6 +373,7 @@ export default function CarDetailPage() {
             <div style={{ marginBottom: 20 }}>
               <label style={labelStyle}>Return date</label>
               <input type="date" value={endDate}
+                min={startDate}
                 onChange={e => setEndDate(e.target.value)} style={inputStyle}
                 onFocus={e => e.target.style.borderColor = '#0a0a0a'}
                 onBlur={e => e.target.style.borderColor = '#e8e8e8'}

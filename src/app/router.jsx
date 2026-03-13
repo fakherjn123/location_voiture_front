@@ -20,6 +20,7 @@ import ClientsPage from "../features/admin/pages/ClientsPage";
 import ClientDetailPage from "../features/admin/pages/ClientDetailPage";
 import ServicesPage from "../features/admin/pages/ServicesPage";
 import HeroBannerPage from "../features/admin/pages/HeroBannerPage";
+import ArchivedCarsPage from "../features/admin/pages/ArchivedCarsPage";
 
 export default function Router() {
   return (
@@ -53,6 +54,9 @@ export default function Router() {
         } />
         <Route path="/admin/cars" element={
           <ProtectedRoute role="admin"><AdminCarsPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/cars/archived" element={
+          <ProtectedRoute role="admin"><ArchivedCarsPage /></ProtectedRoute>
         } />
         <Route path="/admin/payments" element={
           <ProtectedRoute role="admin"><ManagerPaymentsPage /></ProtectedRoute>

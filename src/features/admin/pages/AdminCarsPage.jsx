@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Car, CheckCircle, XCircle, DollarSign, Search, LayoutGrid, List, Fuel, Settings, Edit2, Trash2, Camera, Sparkles, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Car, CheckCircle, XCircle, DollarSign, Search, LayoutGrid, List, Fuel, Settings, Edit2, Archive, Camera, Sparkles, AlertTriangle, ArchiveRestore } from 'lucide-react';
 import api from '../../../config/api.config';
 import { generateCarDescription } from '../../reviews/api/ai.service';
 
@@ -13,17 +14,21 @@ const getStatus = (car) => {
 };
 
 export default function Cars() {
+  const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
+  const [archiveId, setArchiveId] = useState(null);
+  const [archiveWarning, setArchiveWarning] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('Tous');
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('id');
+  const [availabilityWarning, setAvailabilityWarning] = useState(null); // warning message string
 
   const fileRef = useRef();
   const [preview, setPreview] = useState(null);
@@ -67,21 +72,52 @@ export default function Cars() {
       fd.append('transmission', form.transmission);
       if (form.image instanceof File) fd.append('image', form.image);
 
+      let warning = null;
       if (isEdit) {
-        await api.put(`/cars/${form.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const res = await api.put(`/cars/${form.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        warning = res.data?.warning || null;
       } else {
         await api.post('/cars', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
       setModal(false);
       fetchCars();
+      if (warning) {
+        setAvailabilityWarning(warning);
+        setTimeout(() => setAvailabilityWarning(null), 8000);
+      }
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    try { await api.delete(`/cars/${id}`); fetchCars(); }
-    catch (e) { console.error(e); }
-    setDeleteId(null);
+  const handleArchive = async (id) => {
+    setArchiving(true);
+    try {
+      await api.put(`/cars/${id}/archive`);
+      fetchCars();
+      setArchiveId(null);
+      setArchiveWarning(false);
+    } catch (err) {
+      if (err.response?.data?.message === 'active_rentals') {
+        setArchiveWarning(true);
+      } else {
+        alert(err.response?.data?.message || "Erreur lors de l'archivage.");
+        setArchiveId(null);
+      }
+    }
+    setArchiving(false);
+  };
+
+  const handleForceArchive = async (id) => {
+    setArchiving(true);
+    try {
+      await api.put(`/cars/${id}/force-archive`);
+      fetchCars();
+      setArchiveId(null);
+      setArchiveWarning(false);
+    } catch (err) {
+      alert(err.response?.data?.message || "Erreur lors de l'archivage forcé.");
+    }
+    setArchiving(false);
   };
 
   const handleFile = (e) => {
@@ -139,6 +175,36 @@ export default function Cars() {
 
   return (
     <main className="flex-1 overflow-y-auto bg-slate-50 min-h-screen">
+
+      {/* ⚠️ Availability Warning Toast */}
+      {availabilityWarning && (
+        <div style={{
+          position: 'fixed', top: 80, right: 24, zIndex: 9999,
+          background: '#fff', border: '1px solid #fde68a',
+          borderLeft: '4px solid #f59e0b',
+          borderRadius: 12, padding: '14px 20px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          maxWidth: 380, display: 'flex', alignItems: 'flex-start', gap: 12,
+          animation: 'slideIn 0.3s ease',
+        }}>
+          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 13, color: '#92400e', margin: '0 0 4px' }}>
+              Voiture marquée indisponible
+            </p>
+            <p style={{ fontSize: 12, color: '#78350f', margin: 0, lineHeight: 1.5 }}>
+              ⚠️ {availabilityWarning}.<br />
+              <span style={{ color: '#b45309' }}>La location en cours se poursuivra normalement.</span>
+            </p>
+          </div>
+          <button
+            onClick={() => setAvailabilityWarning(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d97706', fontSize: 16, marginLeft: 4, padding: 0, lineHeight: 1 }}
+          >✕</button>
+        </div>
+      )}
+      <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
+
       {/* Header */}
       <header className="sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between px-8 py-5 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="flex flex-col">
@@ -150,6 +216,10 @@ export default function Cars() {
           </h2>
         </div>
         <div className="flex items-center gap-3 mt-4 sm:mt-0">
+          <button onClick={() => navigate('/admin/cars/archived')} className="flex items-center gap-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-100 px-5 py-2.5 rounded-xl font-bold text-sm transition-all">
+            <Archive className="w-4 h-4" />
+            Archives
+          </button>
           <button onClick={openAdd} className="flex items-center gap-2 bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5">
             <span className="text-lg">+</span>
             Ajouter un Véhicule
@@ -260,7 +330,7 @@ export default function Cars() {
                     </div>
                     <div className="flex gap-2 pl-6">
                       <button onClick={() => openEdit(car)} className="px-4 py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-bold transition-colors border border-slate-200">Éditer</button>
-                      <button onClick={() => setDeleteId(car.id)} className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold transition-colors border border-red-100">Supprimer</button>
+                      <button onClick={() => { setArchiveId(car.id); setArchiveWarning(false); }} className="px-4 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-xl text-sm font-bold transition-colors border border-amber-100 flex items-center gap-1.5"><Archive className="w-4 h-4" />Archiver</button>
                     </div>
                   </div>
                 );
@@ -297,8 +367,8 @@ export default function Cars() {
                       <button onClick={() => openEdit(car)} className="py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-sm font-bold transition-colors border border-slate-200 flex items-center justify-center gap-2">
                         <Edit2 className="w-4 h-4 inline" /> Éditer
                       </button>
-                      <button onClick={() => setDeleteId(car.id)} className="py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-bold transition-colors border border-red-100 flex items-center justify-center gap-2">
-                        <Trash2 className="w-4 h-4 inline" /> Sup
+                      <button onClick={() => { setArchiveId(car.id); setArchiveWarning(false); }} className="py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl text-sm font-bold transition-colors border border-amber-100 flex items-center justify-center gap-2">
+                        <Archive className="w-4 h-4 inline" /> Archiver
                       </button>
                     </div>
                   </div>
@@ -414,17 +484,40 @@ export default function Cars() {
         </div>
       )}
 
-      {/* Delete Confirm */}
-      {deleteId && (
+      {/* Archive Confirm Modal */}
+      {archiveId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 p-8 text-center border-t-4 border-t-red-500">
-            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"><AlertTriangle className="w-8 h-8 mx-auto" /></div>
-            <h3 className="font-black text-xl text-slate-900 mb-2">Supprimer le véhicule ?</h3>
-            <p className="text-sm text-slate-500 font-medium mb-8">Cette action est définitive et supprimera toutes les données liées.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">Annuler</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-500/20">Supprimer</button>
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 p-8 text-center border-t-4 border-t-amber-500">
+            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+              <Archive className="w-8 h-8 mx-auto" />
             </div>
+            {!archiveWarning ? (
+              <>
+                <h3 className="font-black text-xl text-slate-900 mb-2">Archiver ce véhicule ?</h3>
+                <p className="text-sm text-slate-500 font-medium mb-8">Le véhicule sera retiré de la flotte active et marqué indisponible.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setArchiveId(null)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">Annuler</button>
+                  <button onClick={() => handleArchive(archiveId)} disabled={archiving} className="flex-[2] py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-500/20 disabled:opacity-60">
+                    {archiving ? "Archivage..." : "Archiver →"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="font-black text-xl text-slate-900 mb-2">Véhicule en location active</h3>
+                <p className="text-sm text-slate-500 font-medium mb-4">Ce véhicule a des réservations en cours ou à venir.</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6 text-xs text-amber-700 font-medium text-left">
+                  <AlertTriangle className="w-4 h-4 inline mr-1" />
+                  Forcer l'archivage annulera toutes les réservations actives associées.
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => { setArchiveId(null); setArchiveWarning(false); }} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">Annuler</button>
+                  <button onClick={() => handleForceArchive(archiveId)} disabled={archiving} className="flex-[2] py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors shadow-md shadow-rose-500/20 disabled:opacity-60">
+                    {archiving ? "Archivage..." : "Forcer l'archivage"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
