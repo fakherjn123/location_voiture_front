@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban, MapPin, Truck } from "lucide-react";
+import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban, MapPin, Truck, AlertTriangle } from "lucide-react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import api from "../../../config/api.config";
 
@@ -12,23 +12,25 @@ const injectDetailStyles = () => {
   const s = document.createElement('style');
   s.id = 'car-detail-styles';
   s.textContent = `
-    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    @keyframes scaleIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+    @keyframes scaleIn { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
     @keyframes shimmer {
       0% { background-position: -400px 0; }
       100% { background-position: 400px 0; }
     }
-    .detail-section { animation: fadeUp .5s ease both; }
-    .detail-section:nth-child(2) { animation-delay: .1s; }
-    .detail-section:nth-child(3) { animation-delay: .2s; }
-    .detail-hero { animation: fadeIn .4s ease; }
-    .review-item { animation: fadeUp .3s ease both; }
-    .book-panel { animation: scaleIn .4s ease both; animation-delay: .15s; }
-    .spec-item { transition: background .2s, transform .15s; border-radius: 10px; padding: 14px 16px; }
-    .spec-item:hover { background: #f8f8f8; transform: translateX(4px); }
-    .star-btn { transition: all .15s; cursor: pointer; }
-    .star-btn:hover { transform: scale(1.15); }
+    .detail-section { animation: slideUp .6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .detail-section:nth-child(2) { animation-delay: .08s; }
+    .detail-section:nth-child(3) { animation-delay: .16s; }
+    .detail-hero { animation: fadeIn .5s ease; }
+    .review-item { animation: slideUp .4s cubic-bezier(0.16, 1, 0.3, 1) both; transition: transform 0.2s; }
+    .review-item:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.03); border-color: #eee; }
+    .book-panel { animation: scaleIn .5s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: .1s; }
+    .spec-item { transition: all .2s; border-radius: 12px; padding: 16px; border: 1px solid transparent; background: #fafafa; }
+    .spec-item:hover { background: #fff; border-color: #eaeaea; box-shadow: 0 8px 20px rgba(0,0,0,0.03); transform: translateY(-2px); }
+    .star-btn { transition: all .2s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
+    .star-btn:hover { transform: scale(1.2) translateY(-2px); }
+    .glass-badge { background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(0,0,0,0.05); }
   `;
   document.head.appendChild(s);
 };
@@ -66,7 +68,7 @@ export default function CarDetailPage() {
   const [deliveryDistance, setDeliveryDistance] = useState(0);
   const [deliveryError, setDeliveryError] = useState(null);
   const [markerPosition, setMarkerPosition] = useState(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 36.8065, lng: 10.1815 });
+  const [mapCenter, setMapCenter] = useState({ lat: 35.8353, lng: 10.5944 }); // Sousse Sahloul
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
@@ -212,12 +214,13 @@ export default function CarDetailPage() {
     ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
-  const labelStyle = { color: "#aaa", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", display: "block", marginBottom: 6, textTransform: 'uppercase' };
+  const labelStyle = { color: "#888", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 8, textTransform: 'uppercase' };
   const inputStyle = {
-    width: "100%", background: "#fafafa", border: "1px solid #e8e8e8",
-    color: "#0a0a0a", padding: "12px 16px", fontSize: 13,
-    fontFamily: sans, borderRadius: 10, outline: "none", boxSizing: "border-box",
-    transition: 'border-color .2s, box-shadow .2s',
+    width: "100%", background: "#fff", border: "1px solid #e5e5e5",
+    color: "#0a0a0a", padding: "14px 16px", fontSize: 14,
+    fontFamily: sans, borderRadius: 12, outline: "none", boxSizing: "border-box",
+    transition: 'all .25s cubic-bezier(0.16, 1, 0.3, 1)',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.01)',
   };
 
   return (
@@ -225,129 +228,150 @@ export default function CarDetailPage() {
 
       {/* ── Hero Header ───────────────────────────────── */}
       <div className="detail-hero" style={{
-        background: "#fff", borderBottom: "1px solid #ebebeb",
-        padding: "0",
+        background: "#fff", borderBottom: "1px solid #eaeaea",
+        padding: "0", position: 'relative', overflow: 'hidden'
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', maxWidth: 1200, margin: '0 auto' }}>
+        {/* Decorative background blur */}
+        <div style={{ position: 'absolute', top: -100, left: -100, width: 400, height: 400, background: 'radial-gradient(circle, rgba(230,230,230,0.5) 0%, transparent 70%)', filter: 'blur(40px)', zIndex: 0, pointerEvents: 'none' }} />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Image */}
           <div style={{
-            height: 360, background: '#f5f5f5', overflow: 'hidden',
-            position: 'relative',
+            height: 460, background: '#f9f9f9', overflow: 'hidden',
+            position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <img
               src={car.image ? `http://localhost:3000${car.image}` : '/placeholder-car.jpg'}
               alt={`${car.brand} ${car.model}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+              onMouseEnter={e => e.target.style.transform = 'scale(1.03)'}
+              onMouseLeave={e => e.target.style.transform = 'scale(1)'}
             />
+            {/* Smooth gradient transition to the content side */}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(to right, transparent 60%, rgba(255,255,255,0.9) 100%)',
+              background: 'linear-gradient(to right, transparent 50%, rgba(255,255,255,0.7) 80%, rgba(255,255,255,1) 100%)',
             }} />
           </div>
 
           {/* Info */}
-          <div style={{ padding: '48px 48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ padding: '56px 64px 48px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#fff' }}>
             <button onClick={() => navigate(-1)} style={{
-              background: "none", border: "none", color: "#aaa", fontSize: 12,
-              cursor: "pointer", fontFamily: sans, padding: 0, marginBottom: 20,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <span style={{ fontSize: 16 }}>←</span> Back to fleet
+              background: "none", border: "none", color: "#888", fontSize: 12, fontWeight: 600,
+              cursor: "pointer", fontFamily: sans, padding: 0, marginBottom: 24,
+              display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.2s',
+              textTransform: 'uppercase', letterSpacing: '0.05em'
+            }} onMouseEnter={e => e.target.style.color = '#0a0a0a'} onMouseLeave={e => e.target.style.color = '#888'}>
+              <span style={{ fontSize: 16 }}>←</span> Retour à la flotte
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: car.available ? "#22c55e" : "#f87171",
-              }} />
-              <span style={{ color: car.available ? "#22c55e" : "#f87171", fontSize: 12, fontWeight: 600 }}>
-                {car.available ? "Available" : "Not available"}
-              </span>
-              {avgRating && (
-                <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
-                  ★ {avgRating}/10 · {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              <div className="glass-badge" style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 20,
+              }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: car.available ? "#10b981" : "#ef4444",
+                  boxShadow: `0 0 8px ${car.available ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)'}`
+                }} />
+                <span style={{ color: "#0a0a0a", fontSize: 12, fontWeight: 700 }}>
+                  {car.available ? "Disponible" : "Indisponible"}
                 </span>
+              </div>
+              
+              {avgRating && (
+                <div className="glass-badge" style={{ padding: '6px 12px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: '#f59e0b', fontSize: 14 }}>★</span>
+                  <span style={{ color: '#0a0a0a', fontSize: 12, fontWeight: 700 }}>{avgRating}/10</span>
+                  <span style={{ color: '#aaa', fontSize: 11, fontWeight: 500, marginLeft: 2 }}>({reviews.length} avis)</span>
+                </div>
               )}
             </div>
 
             <h1 style={{
-              color: "#0a0a0a", fontWeight: 900, fontSize: 42,
-              margin: 0, letterSpacing: "-0.03em", lineHeight: 1.1,
+              color: "#0a0a0a", fontWeight: 900, fontSize: 52,
+              margin: '0 0 4px', letterSpacing: "-0.04em", lineHeight: 1.05,
             }}>
               {car.brand}
             </h1>
-            <p style={{ color: '#bbb', fontSize: 22, fontWeight: 400, margin: '4px 0 0', letterSpacing: '-0.01em' }}>
+            <p style={{ color: '#888', fontSize: 26, fontWeight: 500, margin: '0', letterSpacing: '-0.02em' }}>
               {car.model}
             </p>
 
-            <div style={{ marginTop: 28, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <div style={{ marginTop: 32, display: 'flex', alignItems: 'baseline', gap: 8 }}>
               {isDiscounted ? (
                 <>
-                  <span style={{ color: "#f43f5e", fontSize: 24, fontWeight: 700, textDecoration: 'line-through', marginRight: 8 }}>
+                  <span style={{ color: "#ef4444", fontSize: 24, fontWeight: 700, textDecoration: 'line-through', marginRight: 8, opacity: 0.7 }}>
                     {originalPricePerDay}
                   </span>
-                  <span style={{ color: "#0a0a0a", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+                  <span style={{ color: "#0a0a0a", fontSize: 48, fontWeight: 900, letterSpacing: "-0.04em" }}>
                     {pricePerDay}
                   </span>
                 </>
               ) : (
-                <span style={{ color: "#0a0a0a", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+                <span style={{ color: "#0a0a0a", fontSize: 48, fontWeight: 900, letterSpacing: "-0.04em" }}>
                   {originalPricePerDay}
                 </span>
               )}
-              <span style={{ color: "#bbb", fontSize: 14, fontWeight: 400 }}>TND / day</span>
+              <span style={{ color: "#888", fontSize: 15, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>TND / jour</span>
+              {isDiscounted && <span style={{ marginLeft: 12, background: '#fee2e2', color: '#dc2626', padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800 }}>-10% VIP</span>}
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Content Grid ──────────────────────────────── */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px 80px", display: "grid", gridTemplateColumns: "1fr 370px", gap: 24 }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 32px 100px", display: "grid", gridTemplateColumns: "1fr 400px", gap: 32 }}>
         {/* Left */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
           {/* AI Description */}
           {car.description && (
             <div className="detail-section" style={{
-              background: "#fff", border: "1px solid #ebebeb", borderRadius: 14, padding: "28px",
-              position: 'relative', overflow: 'hidden',
+              background: "#fff", border: "1px solid #eaeaea", borderRadius: 16, padding: "32px",
+              position: 'relative', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
             }}>
               <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                background: 'linear-gradient(90deg, #c8a96e, #d4a843, #c8a96e)',
+                position: 'absolute', top: 0, left: 0, bottom: 0, width: 4,
+                background: 'linear-gradient(180deg, #c8a96e, #d4a843)',
               }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <Sparkles className="w-5 h-5 text-indigo-500" />
-                <h2 style={{ color: "#0a0a0a", fontSize: 15, fontWeight: 700, margin: 0 }}>Description</h2>
+                <h2 style={{ color: "#0a0a0a", fontSize: 18, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>À propos de ce véhicule</h2>
                 <span style={{
-                  fontSize: 9, fontWeight: 700, background: 'rgba(200,169,110,0.12)',
-                  color: '#c8a96e', padding: '2px 8px', borderRadius: 4,
-                  letterSpacing: '0.06em',
-                }}>AI GENERATED</span>
+                  fontSize: 10, fontWeight: 800, background: 'rgba(200,169,110,0.12)',
+                  color: '#c8a96e', padding: '4px 10px', borderRadius: 6,
+                  letterSpacing: '0.08em', marginLeft: 8
+                }}>GÉNÉRÉ PAR L'IA</span>
               </div>
-              <p style={{ color: "#555", fontSize: 14, margin: 0, lineHeight: 1.75 }}>
+              <p style={{ color: "#555", fontSize: 15, margin: 0, lineHeight: 1.8 }}>
                 {car.description}
               </p>
             </div>
           )}
 
           {/* Specs */}
-          <div className="detail-section" style={{ background: "#fff", border: "1px solid #ebebeb", borderRadius: 14, padding: "28px" }}>
-            <h2 style={{ color: "#0a0a0a", fontSize: 15, fontWeight: 700, margin: "0 0 20px" }}>Vehicle details</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+          <div className="detail-section" style={{ background: "#fff", border: "1px solid #eaeaea", borderRadius: 16, padding: "32px", boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <h2 style={{ color: "#0a0a0a", fontSize: 18, fontWeight: 800, margin: "0 0 24px", letterSpacing: '-0.01em' }}>Spécifications</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
               {[
-                { label: "Brand", value: car.brand, icon: <Tag className="w-4 h-4" /> },
-                { label: "Model", value: car.model, icon: <Car className="w-4 h-4" /> },
-                { label: "Daily rate", value: `${pricePerDay} TND ${isDiscounted ? '(VIP)' : ''}`, icon: <DollarSign className="w-4 h-4" /> },
-                { label: "Status", value: car.available ? "Available" : "Not available", icon: <BarChart3 className="w-4 h-4" /> },
-                { label: "Vehicle ID", value: `#${String(car.id).padStart(3, "0")}`, icon: <Key className="w-4 h-4" /> },
+                { label: "Marque", value: car.brand, icon: <Tag className="w-4 h-4 text-slate-500" /> },
+                { label: "Modèle", value: car.model, icon: <Car className="w-4 h-4 text-slate-500" /> },
+                { label: "Tarif", value: `${pricePerDay} TND ${isDiscounted ? '(VIP)' : ''}`, icon: <DollarSign className="w-4 h-4 text-slate-500" /> },
+                { label: "Disponibilité", value: car.available ? "Disponible" : "Indisponible", icon: <BarChart3 className="w-4 h-4 text-slate-500" /> },
+                { label: "Identifiant", value: `#${String(car.id).padStart(3, "0")}`, icon: <Key className="w-4 h-4 text-slate-500" /> },
               ].map(({ label, value, icon }) => (
                 <div key={label} className="spec-item">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', color: '#666' }}>{icon}</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ 
+                      width: 36, height: 36, background: '#fff', border: '1px solid #eaeaea', 
+                      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                    }}>{icon}</div>
                     <div>
-                      <div style={{ color: "#bbb", fontSize: 11, fontWeight: 500, marginBottom: 3 }}>{label}</div>
-                      <div style={{ color: "#0a0a0a", fontSize: 14, fontWeight: 600 }}>{value}</div>
+                      <div style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                      <div style={{ color: "#0a0a0a", fontSize: 14, fontWeight: 700 }}>{value}</div>
                     </div>
                   </div>
                 </div>
@@ -356,24 +380,24 @@ export default function CarDetailPage() {
           </div>
 
           {/* Reviews */}
-          <div className="detail-section" style={{ background: "#fff", border: "1px solid #ebebeb", borderRadius: 14, padding: "28px" }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ color: "#0a0a0a", fontSize: 15, fontWeight: 700, margin: 0 }}>
-                Reviews {reviews.length > 0 && <span style={{ color: "#bbb", fontWeight: 400 }}>({reviews.length})</span>}
+          <div className="detail-section" style={{ background: "#fff", border: "1px solid #eaeaea", borderRadius: 16, padding: "32px", boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+              <h2 style={{ color: "#0a0a0a", fontSize: 18, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>
+                Avis Clients {reviews.length > 0 && <span style={{ color: "#888", fontWeight: 500 }}>({reviews.length})</span>}
               </h2>
               {avgRating && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fafafa', padding: '4px 12px', borderRadius: 20, border: '1px solid #f0f0f0' }}>
-                  <span style={{ color: '#f59e0b', fontSize: 14 }}>★</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#0a0a0a' }}>{avgRating}</span>
-                  <span style={{ color: '#bbb', fontSize: 11 }}>/10</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fafafa', padding: '6px 16px', borderRadius: 20, border: '1px solid #eaeaea' }}>
+                  <span style={{ color: '#f59e0b', fontSize: 16 }}>★</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0a' }}>{avgRating}</span>
+                  <span style={{ color: '#888', fontSize: 12, fontWeight: 600 }}>/10</span>
                 </div>
               )}
             </div>
 
             {reviews.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: '#ccc' }}>
-                <div style={{ marginBottom: 8 }}><MessageSquare className="w-8 h-8 mx-auto text-slate-300" /></div>
-                <p style={{ fontSize: 13, margin: 0 }}>No reviews yet. Be the first!</p>
+              <div style={{ textAlign: 'center', padding: '40px 0', background: '#fafafa', borderRadius: 12, border: '1px dashed #e5e5e5' }}>
+                <div style={{ marginBottom: 12 }}><MessageSquare className="w-10 h-10 mx-auto text-slate-300" /></div>
+                <p style={{ fontSize: 14, margin: 0, color: '#666', fontWeight: 500 }}>Aucun avis pour l'instant. Soyez le premier !</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
@@ -405,42 +429,42 @@ export default function CarDetailPage() {
             )}
 
             {/* Add review */}
-            <div style={{ paddingTop: 20, borderTop: "1px solid #f0f0f0" }}>
-              <h3 style={{ color: "#0a0a0a", fontSize: 13, fontWeight: 700, margin: "0 0 16px" }}>Leave a review</h3>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Rating: {rating}/10</label>
-                <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ paddingTop: 28, borderTop: "1px solid #eaeaea", marginTop: 8 }}>
+              <h3 style={{ color: "#0a0a0a", fontSize: 15, fontWeight: 800, margin: "0 0 20px", letterSpacing: '-0.01em' }}>Laisser un avis</h3>
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Note : <strong style={{color:'#0a0a0a'}}>{rating}</strong> / 10</label>
+                <div style={{ display: 'flex', gap: 6 }}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
                     <button key={n} className="star-btn" onClick={() => setRating(n)}
                       onMouseEnter={() => setHoverRating(n)}
                       onMouseLeave={() => setHoverRating(0)}
                       style={{
-                        background: 'none', border: 'none', padding: 2,
-                        color: n <= (hoverRating || rating) ? '#f59e0b' : '#e0e0e0',
-                        fontSize: 18, transition: 'color .15s',
+                        background: 'none', border: 'none', padding: 0,
+                        color: n <= (hoverRating || rating) ? '#f59e0b' : '#eaeaea',
+                        fontSize: 22, transition: 'color .15s'
                       }}
                     >★</button>
                   ))}
                 </div>
               </div>
               <textarea
-                placeholder="Share your experience..."
+                placeholder="Partagez votre expérience avec ce véhicule..."
                 value={comment}
                 onChange={e => setComment(e.target.value)}
                 rows={3}
-                style={{ ...inputStyle, resize: "vertical", marginBottom: 12 }}
-                onFocus={e => { e.target.style.borderColor = '#0a0a0a'; e.target.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.04)'; }}
-                onBlur={e => { e.target.style.borderColor = '#e8e8e8'; e.target.style.boxShadow = 'none'; }}
+                style={{ ...inputStyle, resize: "vertical", marginBottom: 16 }}
+                onFocus={e => { e.target.style.borderColor = '#0a0a0a'; e.target.style.boxShadow = '0 0 0 4px rgba(10,10,10,0.05)'; }}
+                onBlur={e => { e.target.style.borderColor = '#e5e5e5'; e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)'; }}
               />
               <button onClick={addReview} style={{
                 background: "#0a0a0a", color: "#fff", border: "none",
-                padding: "10px 24px", fontSize: 13, fontFamily: sans,
+                padding: "12px 28px", fontSize: 14, fontFamily: sans,
                 fontWeight: 700, borderRadius: 10, cursor: "pointer",
-                transition: 'opacity .2s, transform .15s',
+                transition: 'all .25s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
               }}
-                onMouseEnter={e => { e.target.style.opacity = '0.85'; e.target.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.target.style.opacity = '1'; e.target.style.transform = 'none'; }}
-              >Submit review →</button>
+                onMouseEnter={e => { e.target.style.background = '#222'; e.target.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.target.style.background = '#0a0a0a'; e.target.style.transform = 'none'; }}
+              >Soumettre l'avis →</button>
             </div>
           </div>
         </div>
@@ -448,30 +472,30 @@ export default function CarDetailPage() {
         {/* Right — Booking */}
         <div>
           <div className="book-panel" style={{
-            background: "#fff", border: "1px solid #ebebeb", borderRadius: 14,
-            padding: "28px", position: "sticky", top: 84,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            background: "#fff", border: "1px solid #eaeaea", borderRadius: 16,
+            padding: "32px", position: "sticky", top: 100,
+            boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
           }}>
-            <h2 style={{ color: "#0a0a0a", fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}>Book this car</h2>
-            <p style={{ color: '#bbb', fontSize: 12, margin: '0 0 20px' }}>Select your dates to reserve</p>
+            <h2 style={{ color: "#0a0a0a", fontSize: 20, fontWeight: 900, margin: "0 0 6px", letterSpacing: '-0.02em' }}>Réserver ce véhicule</h2>
+            <p style={{ color: '#888', fontSize: 13, margin: '0 0 24px', fontWeight: 500 }}>Sélectionnez vos dates pour commencer</p>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Pick-up date</label>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Date de prise en charge</label>
               <input type="date" value={startDate}
                 min={todayStr}
                 onChange={e => setStartDate(e.target.value)} style={inputStyle}
-                onFocus={e => e.target.style.borderColor = '#0a0a0a'}
-                onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+                onFocus={e => { e.target.style.borderColor = '#0a0a0a'; e.target.style.boxShadow = '0 0 0 4px rgba(10,10,10,0.05)'; }}
+                onBlur={e => { e.target.style.borderColor = '#e5e5e5'; e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)'; }}
               />
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Return date</label>
+            <div style={{ marginBottom: 24 }}>
+              <label style={labelStyle}>Date de retour</label>
               <input type="date" value={endDate}
                 min={startDate}
                 onChange={e => setEndDate(e.target.value)} style={inputStyle}
-                onFocus={e => e.target.style.borderColor = '#0a0a0a'}
-                onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+                onFocus={e => { e.target.style.borderColor = '#0a0a0a'; e.target.style.boxShadow = '0 0 0 4px rgba(10,10,10,0.05)'; }}
+                onBlur={e => { e.target.style.borderColor = '#e5e5e5'; e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)'; }}
               />
             </div>
 
@@ -560,26 +584,40 @@ export default function CarDetailPage() {
               )}
             </div>
 
+            {/* Avertissement Caution */}
+            <div style={{
+              background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12,
+              padding: "16px", marginBottom: 20, display: "flex", gap: 12, alignItems: "flex-start"
+            }}>
+              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <h4 style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#92400e" }}>Information Caution</h4>
+                <p style={{ margin: 0, fontSize: 12, color: "#b45309", lineHeight: 1.5 }}>
+                  Une empreinte bancaire ou caution en espèces sera demandée. Pensez à charger votre permis sur votre Profil.
+                </p>
+              </div>
+            </div>
+
             {days > 0 && (
               <div style={{
-                background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 10,
-                padding: "16px 18px", marginBottom: 16,
+                background: "#f9fafb", border: "1px solid #eaeaea", borderRadius: 12,
+                padding: "20px", marginBottom: 20,
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ color: "#aaa", fontSize: 12 }}>{days} day{days > 1 ? "s" : ""} × {pricePerDay} TND</span>
-                  {isDiscounted && <span style={{ color: "#f43f5e", fontSize: 12, fontWeight: 700 }}>-10% VIP</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={{ color: "#888", fontSize: 13, fontWeight: 500 }}>{days} jour{days > 1 ? "s" : ""} × {pricePerDay} TND</span>
+                  {isDiscounted && <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 800, background: '#fee2e2', padding:'2px 6px', borderRadius:4 }}>-10% VIP</span>}
                 </div>
                 {deliveryRequested && deliveryFee > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ color: "#aaa", fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><Truck className="w-3 h-3"/> Frais Livraison</span>
-                    <span style={{ color: "#0a0a0a", fontSize: 12, fontWeight: 600 }}>+{(deliveryFee + returnFee).toFixed(2)} TND</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                    <span style={{ color: "#888", fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}><Truck className="w-4 h-4 text-slate-400"/> Livraison</span>
+                    <span style={{ color: "#0a0a0a", fontSize: 13, fontWeight: 700 }}>+{(deliveryFee + returnFee).toFixed(2)} TND</span>
                   </div>
                 )}
-                <div style={{ height: 1, background: '#f0f0f0', margin: '0 0 8px' }} />
+                <div style={{ height: 1, background: '#eaeaea', margin: '16px 0' }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ color: "#666", fontSize: 13, fontWeight: 600 }}>Estimated total</span>
-                  <span style={{ color: "#0a0a0a", fontWeight: 900, fontSize: 22, letterSpacing: "-0.02em" }}>
-                    {estimated} <span style={{ fontSize: 12, fontWeight: 500, color: '#999' }}>TND</span>
+                  <span style={{ color: "#0a0a0a", fontSize: 14, fontWeight: 800 }}>Total Estimé</span>
+                  <span style={{ color: "#0a0a0a", fontWeight: 900, fontSize: 26, letterSpacing: "-0.04em" }}>
+                    {estimated} <span style={{ fontSize: 14, fontWeight: 600, color: '#888' }}>TND</span>
                   </span>
                 </div>
               </div>
@@ -587,11 +625,11 @@ export default function CarDetailPage() {
 
             {message && (
               <div style={{
-                padding: "10px 14px", marginBottom: 12, borderRadius: 10,
-                background: message.type === "success" ? "#f0fdf4" : "#fff5f5",
+                padding: "12px 16px", marginBottom: 16, borderRadius: 10,
+                background: message.type === "success" ? "#f0fdf4" : "#fef2f2",
                 border: `1px solid ${message.type === "success" ? "#bbf7d0" : "#fecaca"}`,
                 color: message.type === "success" ? "#16a34a" : "#dc2626",
-                fontSize: 13,
+                fontSize: 14, fontWeight: 500
               }}>{message.text}</div>
             )}
 
@@ -599,31 +637,32 @@ export default function CarDetailPage() {
               onClick={rentCar}
               disabled={submitting || !car.available}
               style={{
-                width: "100%", background: car.available ? "#0a0a0a" : "#f0f0f0",
-                color: car.available ? "#fff" : "#bbb",
-                border: "none", padding: "14px", fontSize: 14,
+                width: "100%", background: car.available ? "#0a0a0a" : "#eaeaea",
+                color: car.available ? "#fff" : "#888",
+                border: "none", padding: "16px", fontSize: 16,
                 fontFamily: sans, fontWeight: 800, borderRadius: 12,
                 cursor: car.available ? "pointer" : "not-allowed",
                 letterSpacing: "-0.01em",
-                transition: 'opacity .2s, transform .15s',
-                boxShadow: car.available ? '0 4px 16px rgba(0,0,0,0.12)' : 'none',
+                transition: 'all .25s',
+                boxShadow: car.available ? '0 8px 20px rgba(0,0,0,0.15)' : 'none',
               }}
-              onMouseEnter={e => { if (car.available) { e.target.style.opacity = '0.9'; e.target.style.transform = 'translateY(-1px)'; } }}
-              onMouseLeave={e => { e.target.style.opacity = '1'; e.target.style.transform = 'none'; }}
-            >{submitting ? "Processing..." : car.available ? "Book now →" : "Not available"}</button>
+              onMouseEnter={e => { if (car.available) { e.target.style.background = '#222'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 12px 24px rgba(0,0,0,0.2)'; } }}
+              onMouseLeave={e => { if (car.available) { e.target.style.background = '#0a0a0a'; e.target.style.transform = 'none'; e.target.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)'; } }}
+            >{submitting ? "Traitement..." : car.available ? "Confirmer la Réservation" : "Indisponible"}</button>
 
             {/* Unavailable Dates List */}
             {bookedDates.length > 0 && (
-              <div style={{ marginTop: 28, borderTop: "1px solid #f0f0f0", paddingTop: 20 }}>
-                <h3 style={{ color: "#0a0a0a", fontSize: 13, fontWeight: 700, margin: "0 0 12px", display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Dates déjà réservées <Calendar className="w-4 h-4 text-slate-500" />
+              <div style={{ marginTop: 32, borderTop: "1px solid #eaeaea", paddingTop: 24 }}>
+                <h3 style={{ color: "#0a0a0a", fontSize: 14, fontWeight: 800, margin: "0 0 16px", display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Dates déjà réservées <Calendar className="w-4 h-4 text-slate-400" />
                 </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {bookedDates.map((d, i) => (
                     <div key={i} style={{
-                      fontSize: 12, color: "#e11d48", background: "#fff1f2",
-                      padding: "6px 10px", borderRadius: 6, fontWeight: 600,
-                      display: "flex", alignItems: "center", gap: 6
+                      fontSize: 13, color: "#dc2626", background: "#fef2f2",
+                      padding: "8px 12px", borderRadius: 8, fontWeight: 600,
+                      display: "flex", alignItems: "center", gap: 8,
+                      border: '1px solid #fee2e2'
                     }}>
                       <Ban className="w-4 h-4" />
                       {new Date(d.start).toLocaleDateString("fr-FR")} — {new Date(d.end).toLocaleDateString("fr-FR")}

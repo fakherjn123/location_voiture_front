@@ -48,6 +48,16 @@ const ClientDetail = () => {
         fetchHistory();
     }, [id, location.state]);
 
+    const handleLicenseUpdate = async (status, msg) => {
+        try {
+            await api.put(`/users/${clientProfile.id}/license-status`, { status, msg });
+            setClientProfile(prev => ({ ...prev, driving_license_status: status, driving_license_msg: msg }));
+        } catch (error) {
+            alert("Erreur lors de la mise à jour du permis.");
+            console.error(error);
+        }
+    };
+
     const getInitials = (name) => {
         if (!name) return '?';
         return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -115,6 +125,40 @@ const ClientDetail = () => {
                                     {clientProfile.email}
                                 </div>
                             </div>
+                            
+                            {/* License quick actions */}
+                            {clientProfile.driving_license_url && (
+                                <div className="mt-4 flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <button 
+                                        onClick={() => window.open(`http://localhost:3000${clientProfile.driving_license_url}`, '_blank')}
+                                        className="text-xs font-bold bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 flex items-center gap-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">id_card</span> Inspecter le permis
+                                    </button>
+                                    
+                                    <div className="flex gap-2">
+                                        {clientProfile.driving_license_status !== 'approved' && (
+                                            <button 
+                                                onClick={() => handleLicenseUpdate('approved', 'Validé par l\'agence')}
+                                                className="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-200"
+                                            >Approuver</button>
+                                        )}
+                                        {clientProfile.driving_license_status !== 'rejected' && (
+                                            <button 
+                                                onClick={() => {
+                                                    const reason = prompt("Raison du refus (ex: Image illisible) :");
+                                                    if(reason) handleLicenseUpdate('rejected', reason);
+                                                }}
+                                                className="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg hover:bg-rose-200"
+                                            >Refuser</button>
+                                        )}
+                                    </div>
+                                    
+                                    {clientProfile.driving_license_status === 'approved' && <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Actuellement: Validé</span>}
+                                    {clientProfile.driving_license_status === 'rejected' && <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded">Actuellement: Refusé</span>}
+                                </div>
+                            )}
+
                         </div>
                     </div>
 

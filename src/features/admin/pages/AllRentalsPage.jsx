@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../config/api.config";
-import { Car, Calendar, Clock, CreditCard, ChevronRight, Activity, CalendarDays, Key, XCircle } from "lucide-react";
+import { Car, Calendar, Clock, CreditCard, ChevronRight, Activity, CalendarDays, Key, XCircle, Truck, MapPin } from "lucide-react";
 
 const STATUS = {
     confirmed: { color: "text-sky-600", bg: "bg-sky-50", label: "Confirmée" },
@@ -29,12 +29,29 @@ export default function AllRentalsPage() {
         if (!window.confirm("Voulez-vous vraiment annuler cette réservation ?")) return;
         setCancellingId(rentalId);
         try {
-            await api.put(`/rentals/admin/cancel/${rentalId}`);
+            const res = await api.put(`/rentals/admin/cancel/${rentalId}`);
+            
+            if (res.data.requiresRefund) {
+                alert(`⚠️ ATTENTION : Réservation annulée avec succès.\n\nCe client (${res.data.clientName}) avait déjà payé sa réservation.\nVous devez procéder au REMBOURSEMENT manuel de ${res.data.refundAmount} DT.\n\nUn email automatique d'annulation affirmant qu'un remboursement sera fait a été envoyé au client.`);
+            } else {
+                alert("Réservation annulée avec succès.");
+            }
+
             setRentals(prev => prev.map(r => r.id === rentalId ? { ...r, status: 'cancelled' } : r));
         } catch (err) {
             alert(err.response?.data?.message || "Erreur lors de l'annulation.");
         } finally {
             setCancellingId(null);
+        }
+    };
+
+    const updateDeliveryStatus = async (rentalId, status) => {
+        try {
+            await api.put(`/delivery/${rentalId}/delivery-status`, { status });
+            setRentals(prev => prev.map(r => r.id === rentalId ? { ...r, delivery_status: status } : r));
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de la mise à jour du statut de livraison");
         }
     };
 
@@ -163,6 +180,34 @@ export default function AllRentalsPage() {
                                                 </div>
                                                 <div className="text-sm font-black text-indigo-700">{formatCurrency(rental.total_price)} <span className="text-[10px] font-bold text-indigo-400">DT</span></div>
                                             </div>
+                                            
+                                            {rental.delivery_requested && (
+                                                <div className="col-span-2 mt-2 pt-3 border-t border-slate-200/60">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1.5">
+                                                            <Truck className="w-3 h-3" /> Livraison à Domicile
+                                                        </div>
+                                                        <select
+                                                            value={rental.delivery_status || 'pending'}
+                                                            onChange={(e) => updateDeliveryStatus(rental.id, e.target.value)}
+                                                            className="text-xs bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg px-2 py-1 outline-none font-bold cursor-pointer hover:bg-indigo-100 transition-colors"
+                                                        >
+                                                            <option value="pending">En agence</option>
+                                                            <option value="en_route">En route pour livraison</option>
+                                                            <option value="delivered">Livrée</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex items-start gap-2 bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100">
+                                                        <MapPin className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                                                        <div>
+                                                            <div className="text-xs font-semibold text-slate-700 leading-snug">{rental.delivery_address}</div>
+                                                            <div className="text-[10px] font-bold text-indigo-600 mt-1">
+                                                                Frais : {formatCurrency(Number(rental.delivery_fee || 0) + Number(rental.return_fee || 0))} DT (A/R)
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

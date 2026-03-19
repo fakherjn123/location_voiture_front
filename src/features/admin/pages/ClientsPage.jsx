@@ -108,9 +108,13 @@ const Clients = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-slate-600">
-                                                    <span className="material-symbols-outlined text-[16px] text-slate-400">mail</span>
-                                                    <p className="text-sm font-medium">{client.email}</p>
+                                                <div className="flex flex-col gap-1.5">
+                                                    <div className="flex items-center gap-2 text-slate-600">
+                                                        <span className="material-symbols-outlined text-[16px] text-slate-400">mail</span>
+                                                        <p className="text-sm font-medium">{client.email}</p>
+                                                    </div>
+                                                    {client.driving_license_status === 'pending' && <span className="inline-flex w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Permis à vérifier</span>}
+                                                    {client.driving_license_status === 'approved' && <span className="inline-flex w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Permis Validé</span>}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5 whitespace-nowrap">

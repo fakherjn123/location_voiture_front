@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { User, Mail, Award, Edit2, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { User, Mail, Award, Edit2, CheckCircle, AlertTriangle, ArrowLeft, Clock } from 'lucide-react';
 import { AuthContext } from '../../auth/context/AuthContext';
 import api from '../../../config/api.config';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ export default function ClientProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '' });
     const [saving, setSaving] = useState(false);
+    const [uploadingLicense, setUploadingLicense] = useState(false);
 
     const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -63,6 +64,31 @@ export default function ClientProfilePage() {
             setMessage({ text: err.response?.data?.message || 'Erreur lors de la mise à jour.', type: 'error' });
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleLicenseUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('license', file);
+
+        setUploadingLicense(true);
+        setMessage({ text: '', type: '' });
+
+        try {
+            const res = await api.post('/users/upload-license', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setProfile(prev => ({ ...prev, driving_license_url: res.data.driving_license_url }));
+            setMessage({ text: res.data.message, type: 'success' });
+            setTimeout(() => setMessage({ text: '', type: '' }), 5000);
+        } catch (err) {
+            console.error(err);
+            setMessage({ text: err.response?.data?.message || 'Erreur lors du téléchargement du permis.', type: 'error' });
+        } finally {
+            setUploadingLicense(false);
         }
     };
 
@@ -205,6 +231,72 @@ export default function ClientProfilePage() {
                                 </form>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Section Permis de Conduire */}
+                <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm relative overflow-hidden mt-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-slate-900">Permis de conduire</h3>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                        {profile.driving_license_url ? (
+                            <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border w-full ${
+                                profile.driving_license_status === 'approved' ? 'bg-emerald-50 border-emerald-100' :
+                                profile.driving_license_status === 'rejected' ? 'bg-rose-50 border-rose-100' :
+                                'bg-amber-50 border-amber-100'
+                            }`}>
+                                <div className={`w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 ${
+                                    profile.driving_license_status === 'approved' ? 'text-emerald-600' :
+                                    profile.driving_license_status === 'rejected' ? 'text-rose-600' :
+                                    'text-amber-600'
+                                }`}>
+                                    {profile.driving_license_status === 'approved' && <CheckCircle className="w-6 h-6" />}
+                                    {profile.driving_license_status === 'rejected' && <AlertTriangle className="w-6 h-6" />}
+                                    {profile.driving_license_status === 'pending' && <Clock className="w-6 h-6" />}
+                                    {!['approved', 'rejected', 'pending'].includes(profile.driving_license_status) && <CheckCircle className="w-6 h-6" />}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-sm font-bold text-slate-900">
+                                        {profile.driving_license_status === 'approved' ? 'Permis validé' : 
+                                         profile.driving_license_status === 'rejected' ? 'Permis refusé par l\'agence' : 
+                                         'En cours de vérification'}
+                                    </div>
+                                    <div className="text-xs text-slate-600 mt-1">
+                                        {profile.driving_license_status === 'approved' && 'Votre permis a été vérifié et approuvé par l\'agence.'}
+                                        {profile.driving_license_status === 'pending' && 'Votre document est en cours d\'examen par notre équipe.'}
+                                        {profile.driving_license_status === 'rejected' && (
+                                            <span className="text-rose-600 font-bold">Motif : {profile.driving_license_msg || 'Document illisible ou non valide.'}</span>
+                                        )}
+                                        {!['approved', 'rejected', 'pending'].includes(profile.driving_license_status) && 'Votre permis est enregistré.'}
+                                    </div>
+                                </div>
+                                <div className="ml-auto shrink-0 mt-3 sm:mt-0">
+                                    <label className="cursor-pointer text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white px-3 py-2 border border-slate-200 rounded-lg shadow-sm block text-center">
+                                        Mettre à jour
+                                        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleLicenseUpload} disabled={uploadingLicense} />
+                                    </label>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-4 bg-orange-50 p-4 rounded-xl border border-orange-100 w-full">
+                                <div className="w-12 h-12 bg-white text-orange-500 rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                                    <AlertTriangle className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-900 shrink-0">Permis manquant</div>
+                                    <div className="text-xs text-slate-500 mt-1">Requis pour vos locations.</div>
+                                </div>
+                                <div className="ml-auto shrink-0">
+                                    <label className="cursor-pointer bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm inline-flex items-center gap-2">
+                                        {uploadingLicense ? (
+                                            <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                        ) : 'Uploader le permis'}
+                                        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleLicenseUpload} disabled={uploadingLicense} />
+                                    </label>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

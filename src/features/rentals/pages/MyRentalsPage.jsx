@@ -27,8 +27,12 @@ export default function MyRentalsPage() {
   useEffect(() => { fetch(); }, []);
 
   const handleCancel = async (id) => {
-    if (!confirm("Cancel this booking?")) return;
-    try { await cancelRental(id); fetch(); }
+    if (!window.confirm("Cancel this booking? \n\nPlease note: You can only cancel free of charge up to 48 hours before the start date. If you have already paid, a refund will be processed automatically.")) return;
+    try { 
+      const res = await cancelRental(id); 
+      alert(res.data?.message || "Booking cancelled successfully.");
+      fetch(); 
+    }
     catch (e) { alert(e.response?.data?.message || "Cannot cancel."); }
   };
 
