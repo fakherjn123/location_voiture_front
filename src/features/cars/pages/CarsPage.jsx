@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { Search, DollarSign, Car } from "lucide-react";
+import { Search, DollarSign, Car, Sparkles, Gift } from "lucide-react";
+import AiRecommendationCard from "../../recommendation/components/AiRecommendationCard";
 import api from "../../../config/api.config";
 import { Link } from "react-router-dom";
 
@@ -62,7 +63,11 @@ const injectCarsStyles = () => {
 };
 
 /* ─── Car Card ────────────────────────────────────────────── */
-function CarCard({ car, index }) {
+function CarCard({ car, index, discount }) {
+  const isDiscounted = discount > 0;
+  const originalPrice = car.price_per_day;
+  const discountedPrice = isDiscounted ? Math.round(originalPrice * (1 - discount / 100)) : originalPrice;
+
   return (
     <Link
       to={`/cars/${car.id}`}
@@ -120,8 +125,13 @@ function CarCard({ car, index }) {
           }}>
             <div>
               <span style={{ fontSize: 10, color: "#bbb", display: "block", marginBottom: 3, fontWeight: 600, letterSpacing: '0.06em' }}>DAILY RATE</span>
+              {isDiscounted && (
+                 <span style={{ fontSize: 13, fontWeight: 600, color: '#f43f5e', textDecoration: 'line-through', marginRight: 6 }}>
+                   {originalPrice} TND
+                 </span>
+              )}
               <span style={{ fontSize: 20, fontWeight: 900, color: "#000", letterSpacing: '-0.02em' }}>
-                {car.price_per_day} <span style={{ fontSize: 11, fontWeight: 500, color: "#aaa" }}>TND</span>
+                {discountedPrice} <span style={{ fontSize: 11, fontWeight: 500, color: "#aaa" }}>TND</span>
               </span>
             </div>
             <div className="arrow-circle" style={{
@@ -147,13 +157,27 @@ export default function CarsPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ brand: "", maxPrice: "" });
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showAiRec, setShowAiRec] = useState(false);
+  const [userPoints, setUserPoints] = useState(null);
   const heroRef = useRef(null);
 
   useEffect(() => {
     injectCarsStyles();
     fetchCars();
     fetchHeroImages();
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    if (localStorage.getItem("token")) {
+      try {
+        const { data } = await api.get("/users/me");
+        setUserPoints(data.points);
+      } catch (err) {
+        console.error("User profile fetch error:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (heroImages.length > 1) {
@@ -325,6 +349,19 @@ export default function CarsPage() {
               />
             </div>
             <button
+              onClick={() => setShowAiRec(!showAiRec)}
+              style={{
+                padding: "16px 20px", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.2))",
+                border: "1px solid rgba(139, 92, 246, 0.4)", borderRadius: 16, color: "#fff",
+                fontWeight: 800, fontSize: 14, cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                display: "flex", alignItems: "center", gap: 8, flexShrink: 0
+              }}
+              onMouseEnter={e => { e.target.style.transform = 'scale(1.02) translateY(-2px)'; e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(34, 211, 238, 0.4))'; }}
+              onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.2))'; }}
+            >
+              <Sparkles size={16} className="text-violet-300" /> IA Suggest
+            </button>
+            <button
               onClick={fetchCars}
               style={{
                 padding: "16px 40px", background: "#fff", color: "#000",
@@ -343,6 +380,14 @@ export default function CarsPage() {
 
       {/* ── Results Section ───────────────────────────── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px 80px" }}>
+        
+        {/* AI Recommendation Slot */}
+        {showAiRec && (
+            <div style={{ animation: 'fadeUp 0.5s ease both' }}>
+               <AiRecommendationCard />
+            </div>
+        )}
+
         {/* Filters Bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -370,6 +415,36 @@ export default function CarsPage() {
             ))}
           </div>
         </div>
+
+        {/* Loyalty Banner */}
+        {userPoints !== null && (
+          <div style={{
+            background: userPoints >= 100 
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.2) 100%)'
+              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.2) 100%)',
+            border: `1px solid ${userPoints >= 100 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+            borderRadius: 16, padding: '20px 24px', marginBottom: 30,
+            display: 'flex', alignItems: 'center', gap: 16, animation: 'fadeUp 0.6s ease both'
+          }}>
+            <div style={{
+              background: userPoints >= 100 ? '#10b981' : '#f59e0b',
+              width: 48, height: 48, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+            }}>
+              <Gift size={24} />
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#000', letterSpacing: '-0.01em' }}>
+                {userPoints >= 100 ? 'Félicitations, vous êtes VIP !' : 'Programme de Fidélité BMZ'}
+              </h4>
+              <p style={{ margin: 0, fontSize: 14, color: '#555', lineHeight: 1.5 }}>
+                {userPoints >= 100 
+                  ? `Vos ${userPoints} points vous offrent automatiquement -10% de réduction sur TOUS nos véhicules lors de la finalisation.`
+                  : `Vous avez actuellement ${userPoints} points. Louez nos véhicules pour atteindre 100 points et débloquer -10% sur toute la flotte !`}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Grid */}
         {loading ? (
@@ -408,7 +483,14 @@ export default function CarsPage() {
             gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
             gap: 22,
           }}>
-            {filteredCars.map((car, i) => <CarCard key={car.id} car={car} index={i} />)}
+            {filteredCars.map((car, i) => (
+              <CarCard 
+                key={car.id} 
+                car={car} 
+                index={i} 
+                discount={userPoints >= 100 ? 10 : 0} 
+              />
+            ))}
           </div>
         )}
       </div>

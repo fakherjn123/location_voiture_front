@@ -415,7 +415,7 @@ export default function Cars() {
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Statut</label>
                   <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:ring-primary-500 focus:border-primary-500 font-medium text-sm transition-colors cursor-pointer">
-                    <option value="available"><CheckCircle className="w-6 h-6 inline-block" /> Disponible</option>
+                    <option value="available">Disponible</option>
                     <option value="unavailable">Indisponible</option>
                   </select>
                 </div>

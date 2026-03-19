@@ -30,6 +30,7 @@ export default function Navbar() {
       ? [
         { to: "/rentals", label: "My Rentals" },
         { to: "/facture", label: "Invoices" },
+        { to: "/profile", label: "Profile" },
       ]
       : []),
     ...(user?.role === "admin"

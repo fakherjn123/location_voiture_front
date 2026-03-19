@@ -21,6 +21,7 @@ import ClientDetailPage from "../features/admin/pages/ClientDetailPage";
 import ServicesPage from "../features/admin/pages/ServicesPage";
 import HeroBannerPage from "../features/admin/pages/HeroBannerPage";
 import ArchivedCarsPage from "../features/admin/pages/ArchivedCarsPage";
+import ClientProfilePage from "../features/profile/pages/ClientProfilePage";
 
 export default function Router() {
   return (
@@ -46,6 +47,9 @@ export default function Router() {
         } />
         <Route path="/facture" element={
           <ProtectedRoute><MyFacturesPage /></ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute><ClientProfilePage /></ProtectedRoute>
         } />
 
         {/* ADMIN */}

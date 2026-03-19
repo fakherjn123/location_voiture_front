@@ -61,7 +61,7 @@ export default function MyRentalsPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {rentals.map(rental => {
+            {rentals.filter(r => r.status !== 'pending').map(rental => {
               const cfg = STATUS[rental.status] || STATUS.confirmed;
               const d = days(rental.start_date, rental.end_date);
               return (

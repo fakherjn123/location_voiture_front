@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban } from "lucide-react";
+import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban, MapPin, Truck } from "lucide-react";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import api from "../../../config/api.config";
 
 const sans = "'Inter', 'Helvetica Neue', sans-serif";
@@ -46,6 +47,32 @@ export default function CarDetailPage() {
   const [message, setMessage] = useState(null);
   const [hoverRating, setHoverRating] = useState(0);
   const [bookedDates, setBookedDates] = useState([]);
+  const [userPoints, setUserPoints] = useState(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: "AIzaSyBOOflQXcbdbG22UscFvYLhwmx5TfM2sTc",
+    libraries: ['places']
+  });
+
+  // Delivery states
+  const [deliveryRequested, setDeliveryRequested] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryLat, setDeliveryLat] = useState(null);
+  const [deliveryLng, setDeliveryLng] = useState(null);
+  const [deliveryProcessing, setDeliveryProcessing] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [returnFee, setReturnFee] = useState(0);
+  const [deliveryDistance, setDeliveryDistance] = useState(0);
+  const [deliveryError, setDeliveryError] = useState(null);
+  const [markerPosition, setMarkerPosition] = useState(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 36.8065, lng: 10.1815 });
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      api.get("/users/me").then(r => setUserPoints(r.data.points)).catch(console.error);
+    }
+  }, []);
 
   useEffect(() => {
     injectDetailStyles();
@@ -60,7 +87,9 @@ export default function CarDetailPage() {
       .then(r => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const upcoming = (r.data || []).filter(d => new Date(d.end) >= today);
+        const upcoming = (r.data || [])
+          .filter(d => new Date(d.end) >= today)
+          .sort((a, b) => new Date(a.start) - new Date(b.start));
         setBookedDates(upcoming);
       })
       .catch(console.error);
@@ -72,10 +101,49 @@ export default function CarDetailPage() {
     }
   }, [startDate]);
 
+  const calculateDelivery = async (addressToUse = deliveryAddress, latToUse = deliveryLat, lngToUse = deliveryLng) => {
+    if (!deliveryRequested || (!addressToUse.trim() && !latToUse)) {
+      setDeliveryFee(0);
+      setReturnFee(0);
+      setDeliveryError(null);
+      return;
+    }
+    setDeliveryProcessing(true);
+    setDeliveryError(null);
+    try {
+      const res = await api.post("/delivery/calculate", { 
+        address: addressToUse,
+        lat: latToUse,
+        lng: lngToUse
+      });
+      setDeliveryFee(res.data.delivery_fee);
+      setReturnFee(res.data.return_fee);
+      setDeliveryDistance(res.data.distance_km);
+      
+      // Mettre à jour la carte et l'adresse s'ils proviennent du backend
+      if (res.data.lat && res.data.lng) {
+         setMarkerPosition({ lat: res.data.lat, lng: res.data.lng });
+         setMapCenter({ lat: res.data.lat, lng: res.data.lng });
+         setDeliveryLat(res.data.lat);
+         setDeliveryLng(res.data.lng);
+      }
+    } catch (err) {
+      setDeliveryError(err.response?.data?.message || "Erreur de calcul de l'adresse.");
+      setDeliveryFee(0);
+      setReturnFee(0);
+    }
+    setDeliveryProcessing(false);
+  };
+
+  const discount = userPoints >= 100 ? 10 : 0;
+  const isDiscounted = discount > 0;
+  const originalPricePerDay = car ? car.price_per_day : 0;
+  const pricePerDay = isDiscounted ? Math.round(originalPricePerDay * (1 - discount / 100)) : originalPricePerDay;
+
   const days = startDate && endDate
     ? Math.max(0, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000))
     : 0;
-  const estimated = car ? (days * car.price_per_day).toFixed(2) : 0;
+  const estimated = (days * pricePerDay + deliveryFee + returnFee).toFixed(2);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -87,7 +155,23 @@ export default function CarDetailPage() {
     if (new Date(endDate) <= new Date(startDate)) return setMessage({ type: "error", text: "La date de retour doit être après la date de prise en charge." });
     setSubmitting(true);
     try {
-      const res = await api.post("/rentals", { car_id: Number(id), start_date: startDate, end_date: endDate });
+      const payload = { 
+        car_id: Number(id), 
+        start_date: startDate, 
+        end_date: endDate 
+      };
+      if (deliveryRequested) {
+        payload.delivery_requested = true;
+        payload.delivery_address = deliveryAddress;
+        if (deliveryLat && deliveryLng) {
+          payload.delivery_lat = deliveryLat;
+          payload.delivery_lng = deliveryLng;
+        }
+      }
+      if (deliveryRequested && deliveryError) {
+        return setMessage({ type: "error", text: "Veuillez corriger l'adresse de livraison avant de réserver." });
+      }
+      const res = await api.post("/rentals", payload);
       setMessage({ type: "success", text: `Redirection vers le paiement...` });
       setTimeout(() => navigate(`/payment/${res.data.rental.id}`), 1500);
     } catch (err) {
@@ -197,9 +281,20 @@ export default function CarDetailPage() {
             </p>
 
             <div style={{ marginTop: 28, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ color: "#0a0a0a", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
-                {car.price_per_day}
-              </span>
+              {isDiscounted ? (
+                <>
+                  <span style={{ color: "#f43f5e", fontSize: 24, fontWeight: 700, textDecoration: 'line-through', marginRight: 8 }}>
+                    {originalPricePerDay}
+                  </span>
+                  <span style={{ color: "#0a0a0a", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+                    {pricePerDay}
+                  </span>
+                </>
+              ) : (
+                <span style={{ color: "#0a0a0a", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+                  {originalPricePerDay}
+                </span>
+              )}
               <span style={{ color: "#bbb", fontSize: 14, fontWeight: 400 }}>TND / day</span>
             </div>
           </div>
@@ -243,7 +338,7 @@ export default function CarDetailPage() {
               {[
                 { label: "Brand", value: car.brand, icon: <Tag className="w-4 h-4" /> },
                 { label: "Model", value: car.model, icon: <Car className="w-4 h-4" /> },
-                { label: "Daily rate", value: `${car.price_per_day} TND`, icon: <DollarSign className="w-4 h-4" /> },
+                { label: "Daily rate", value: `${pricePerDay} TND ${isDiscounted ? '(VIP)' : ''}`, icon: <DollarSign className="w-4 h-4" /> },
                 { label: "Status", value: car.available ? "Available" : "Not available", icon: <BarChart3 className="w-4 h-4" /> },
                 { label: "Vehicle ID", value: `#${String(car.id).padStart(3, "0")}`, icon: <Key className="w-4 h-4" /> },
               ].map(({ label, value, icon }) => (
@@ -380,14 +475,106 @@ export default function CarDetailPage() {
               />
             </div>
 
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', ...labelStyle, textTransform: 'none', marginBottom: 12 }}>
+                <input 
+                  type="checkbox" 
+                  checked={deliveryRequested} 
+                  onChange={e => {
+                    setDeliveryRequested(e.target.checked);
+                    if (!e.target.checked) {
+                      setDeliveryFee(0);
+                      setReturnFee(0);
+                      setDeliveryError(null);
+                    }
+                  }}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <Truck className="w-4 h-4 text-slate-500" />
+                <span style={{ fontSize: 13, color: '#0a0a0a', fontWeight: 600 }}>Je souhaite être livré à domicile</span>
+              </label>
+
+              {deliveryRequested && (
+                <div style={{ animation: 'fadeUp 0.3s ease', paddingLeft: 24, borderLeft: '2px solid #f0f0f0', marginLeft: 8 }}>
+                  <label style={labelStyle}>Adresse de livraison</label>
+                  <p style={{ fontSize: 12, color: '#666', marginBottom: 8, marginTop: -2 }}>
+                    Entrez votre adresse ou cliquez directement sur la carte ci-dessous.
+                  </p>
+                  <div style={{ position: 'relative', marginBottom: 12 }}>
+                    <MapPin className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: 12, top: 12 }} />
+                    <input 
+                      type="text" 
+                      placeholder="ex: 123 Rue de la République..." 
+                      value={deliveryAddress}
+                      onChange={e => setDeliveryAddress(e.target.value)}
+                      onBlur={() => calculateDelivery()}
+                      style={{ ...inputStyle, paddingLeft: 36 }}
+                    />
+                  </div>
+
+                  {isLoaded ? (
+                    <GoogleMap
+                      mapContainerStyle={{ width: '100%', height: '280px', borderRadius: '10px', border: '1px solid #e8e8e8' }}
+                      center={mapCenter}
+                      zoom={11}
+                      onClick={(e) => {
+                        const lat = e.latLng.lat();
+                        const lng = e.latLng.lng();
+                        setMarkerPosition({ lat, lng });
+                        setMapCenter({ lat, lng });
+                        setDeliveryLat(lat);
+                        setDeliveryLng(lng);
+                        
+                        // Reverse Geocoding pour afficher l'adresse en format texte
+                        const geocoder = new window.google.maps.Geocoder();
+                        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                          if (status === "OK" && results[0]) {
+                            const addr = results[0].formatted_address;
+                            setDeliveryAddress(addr);
+                            calculateDelivery(addr, lat, lng);
+                          } else {
+                            calculateDelivery(deliveryAddress, lat, lng);
+                          }
+                        });
+                      }}
+                    >
+                      {markerPosition && <Marker position={markerPosition} />}
+                    </GoogleMap>
+                  ) : (
+                    <div style={{ width: '100%', height: '280px', background: '#f5f5f5', borderRadius: 10, border: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: 13 }}>
+                       Chargement de la carte...
+                    </div>
+                  )}
+
+                  {deliveryProcessing && <div style={{ fontSize: 11, color: '#666', marginTop: 12 }}>Calcul des frais en cours...</div>}
+                  {deliveryError && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 12 }}>{deliveryError}</div>}
+                  {!deliveryProcessing && !deliveryError && deliveryFee > 0 && (
+                     <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: 12, marginTop: 12 }}>
+                       <div style={{ fontSize: 12, color: '#16a34a', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                         <span>Distance de l'agence : <strong style={{color:'#15803d'}}>{deliveryDistance.toFixed(1)} km</strong></span>
+                         <span>Frais Aller + Retour estimés à : <strong style={{color:'#15803d'}}>+{(deliveryFee + returnFee).toFixed(2)} TND</strong></span>
+                       </div>
+                     </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {days > 0 && (
               <div style={{
                 background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 10,
                 padding: "16px 18px", marginBottom: 16,
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ color: "#aaa", fontSize: 12 }}>{days} day{days > 1 ? "s" : ""} × {car.price_per_day} TND</span>
+                  <span style={{ color: "#aaa", fontSize: 12 }}>{days} day{days > 1 ? "s" : ""} × {pricePerDay} TND</span>
+                  {isDiscounted && <span style={{ color: "#f43f5e", fontSize: 12, fontWeight: 700 }}>-10% VIP</span>}
                 </div>
+                {deliveryRequested && deliveryFee > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ color: "#aaa", fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><Truck className="w-3 h-3"/> Frais Livraison</span>
+                    <span style={{ color: "#0a0a0a", fontSize: 12, fontWeight: 600 }}>+{(deliveryFee + returnFee).toFixed(2)} TND</span>
+                  </div>
+                )}
                 <div style={{ height: 1, background: '#f0f0f0', margin: '0 0 8px' }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ color: "#666", fontSize: 13, fontWeight: 600 }}>Estimated total</span>
