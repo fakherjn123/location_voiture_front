@@ -5,6 +5,6 @@ import { AuthProvider } from "./features/auth/context/AuthContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <AuthProvider>
-    <Router/>
+    <Router />
   </AuthProvider>
-);import "./index.css";
+); import "./index.css";

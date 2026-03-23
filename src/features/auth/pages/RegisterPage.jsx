@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -57,9 +58,19 @@ export default function RegisterPage() {
             ].map(({ key, label, type, placeholder }) => (
               <div key={key} style={{ marginBottom: 14 }}>
                 <label style={{ color: "#666", fontSize: 12, fontWeight: 500, display: "block", marginBottom: 6 }}>{label}</label>
-                <input type={type} required value={form[key]}
-                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                  placeholder={placeholder} style={inputStyle} />
+                <div style={{ position: "relative" }}>
+                  <input type={type === "password" && showPassword ? "text" : type} required value={form[key]}
+                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    placeholder={placeholder} style={type === "password" ? { ...inputStyle, paddingRight: 40 } : inputStyle} />
+                  {type === "password" && (
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
+                      position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                      background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#999", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", outline: "none"
+                    }} title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>
+                      {showPassword ? "🙈" : "👁️"}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
 

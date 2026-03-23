@@ -6,10 +6,6 @@ export const rentCar = (data) =>
 export const getMyRentals = () =>
   api.get("/rentals/my");
 
-// Backend route is: PUT /rentals/cancel/:id
+// URL corrigée: était /rentals/${id}/confirm
 export const cancelRental = (id) =>
   api.put(`/rentals/cancel/${id}`);
-
-
-
-

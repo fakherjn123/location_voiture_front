@@ -126,9 +126,9 @@ function CarCard({ car, index, discount }) {
             <div>
               <span style={{ fontSize: 10, color: "#bbb", display: "block", marginBottom: 3, fontWeight: 600, letterSpacing: '0.06em' }}>DAILY RATE</span>
               {isDiscounted && (
-                 <span style={{ fontSize: 13, fontWeight: 600, color: '#f43f5e', textDecoration: 'line-through', marginRight: 6 }}>
-                   {originalPrice} TND
-                 </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#f43f5e', textDecoration: 'line-through', marginRight: 6 }}>
+                  {originalPrice} TND
+                </span>
               )}
               <span style={{ fontSize: 20, fontWeight: 900, color: "#000", letterSpacing: '-0.02em' }}>
                 {discountedPrice} <span style={{ fontSize: 11, fontWeight: 500, color: "#aaa" }}>TND</span>
@@ -380,12 +380,12 @@ export default function CarsPage() {
 
       {/* ── Results Section ───────────────────────────── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px 80px" }}>
-        
+
         {/* AI Recommendation Slot */}
         {showAiRec && (
-            <div style={{ animation: 'fadeUp 0.5s ease both' }}>
-               <AiRecommendationCard />
-            </div>
+          <div style={{ animation: 'fadeUp 0.5s ease both' }}>
+            <AiRecommendationCard />
+          </div>
         )}
 
         {/* Filters Bar */}
@@ -419,7 +419,7 @@ export default function CarsPage() {
         {/* Loyalty Banner */}
         {userPoints !== null && (
           <div style={{
-            background: userPoints >= 100 
+            background: userPoints >= 100
               ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.2) 100%)'
               : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.2) 100%)',
             border: `1px solid ${userPoints >= 100 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
@@ -438,7 +438,7 @@ export default function CarsPage() {
                 {userPoints >= 100 ? 'Félicitations, vous êtes VIP !' : 'Programme de Fidélité BMZ'}
               </h4>
               <p style={{ margin: 0, fontSize: 14, color: '#555', lineHeight: 1.5 }}>
-                {userPoints >= 100 
+                {userPoints >= 100
                   ? `Vos ${userPoints} points vous offrent automatiquement -10% de réduction sur TOUS nos véhicules lors de la finalisation.`
                   : `Vous avez actuellement ${userPoints} points. Louez nos véhicules pour atteindre 100 points et débloquer -10% sur toute la flotte !`}
               </p>
@@ -484,11 +484,11 @@ export default function CarsPage() {
             gap: 22,
           }}>
             {filteredCars.map((car, i) => (
-              <CarCard 
-                key={car.id} 
-                car={car} 
-                index={i} 
-                discount={userPoints >= 100 ? 10 : 0} 
+              <CarCard
+                key={car.id}
+                car={car}
+                index={i}
+                discount={userPoints >= 100 ? 10 : 0}
               />
             ))}
           </div>

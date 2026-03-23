@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,9 +74,17 @@ export default function LoginPage() {
             </div>
             <div style={{ marginBottom: 20 }}>
               <label style={{ color: "#666", fontSize: 12, fontWeight: 500, display: "block", marginBottom: 6 }}>Password</label>
-              <input type="password" required value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="••••••••" style={inputStyle} />
+              <div style={{ position: "relative" }}>
+                <input type={showPassword ? "text" : "password"} required value={form.password}
+                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                  placeholder="••••••••" style={{ ...inputStyle, paddingRight: 40 }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
+                  position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#999", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", outline: "none"
+                }} title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
             </div>
 
             {error && (

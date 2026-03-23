@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../../features/auth/context/AuthContext";
+import api from "../../../config/api.config";
 
 const sans = "'Inter', 'Helvetica Neue', sans-serif";
 
@@ -10,6 +11,17 @@ export default function Navbar() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [hoveredLink, setHoveredLink] = useState(null);
+  const [points, setPoints] = useState(null);
+
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      api.get("/users/me")
+        .then((res) => setPoints(res.data.points || 0))
+        .catch(() => { });
+    } else {
+      setPoints(null);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
@@ -160,6 +172,22 @@ export default function Navbar() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {user ? (
               <>
+                {points !== null && user.role !== "admin" && (
+                  <Link to="/profile" style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "#fdf8ee", border: "1px solid rgba(200,169,110,0.35)",
+                    borderRadius: 20, padding: "5px 12px", textDecoration: "none",
+                    transition: "all 0.2s",
+                  }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#fef3d0"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#fdf8ee"; e.currentTarget.style.transform = "none"; }}
+                  >
+                    <span style={{ fontSize: 13 }}>⭐</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: points >= 500 ? "#7c3aed" : points >= 200 ? "#b8860b" : points >= 100 ? "#64748b" : "#92400e" }}>
+                      {points} pts
+                    </span>
+                  </Link>
+                )}
                 <div style={{
                   textAlign: "right", marginRight: 6,
                   display: 'flex', alignItems: 'center', gap: 10,
