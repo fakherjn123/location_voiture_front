@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getClients } from '../api/client.service';
+import { Users, UserPlus, Search, Mail, ChevronRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+
+const sans = "'Inter', 'Helvetica Neue', sans-serif";
 
 const Clients = () => {
     const navigate = useNavigate();
@@ -33,26 +36,61 @@ const Clients = () => {
     };
 
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif" }}>
-            <div className="bg-white border-b border-slate-100 px-8 py-8 mb-8">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Clients</h2>
+        <div style={{ fontFamily: sans, minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+            {/* ── Header ────────────────────────────────────────── */}
+            <div style={{
+                background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                padding: "60px 40px", position: "relative", overflow: "hidden"
+            }}>
+                {/* Glow Effects */}
+                <div style={{
+                    position: 'absolute', top: -100, right: 100, width: 300, height: 300,
+                    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+                    borderRadius: '50%', pointerEvents: 'none'
+                }} />
+                
+                <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                            <div style={{
+                                width: 72, height: 72, background: 'rgba(255,255,255,0.05)', borderRadius: 24,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                                border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)'
+                            }}>
+                                <Users size={32} />
+                            </div>
+                            <div>
+                                <h1 style={{ color: "#fff", fontSize: 36, fontWeight: 900, margin: '0 0 8px', letterSpacing: "-0.02em" }}>
+                                    Clients
+                                </h1>
+                                <p style={{ color: "#94a3b8", fontSize: 16, margin: 0, fontWeight: 500 }}>
+                                    Gérez les profils, les locations et les dépenses de vos clients.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <button className="bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-slate-900/20 cursor-pointer">
-                        <span className="material-symbols-outlined text-lg">person_add</span>
-                        Nouveau Client
-                    </button>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-8">
+            {/* ── Content ───────────────────────────────────────── */}
+            <div style={{ maxWidth: 1280, margin: "-32px auto 80px", padding: "0 40px", position: "relative", zIndex: 10 }}>
                 {/* Search */}
-                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-6 flex flex-wrap gap-4 items-center">
-                    <div className="flex-1 relative">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <div style={{
+                    background: "#fff", borderRadius: 24, padding: "24px", marginBottom: 24,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.02)', border: "1px solid #e2e8f0",
+                    display: 'flex', alignItems: 'center', gap: 16
+                }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                        <Search size={20} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                         <input
-                            className="w-full pl-12 pr-4 py-3 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-transparent focus:border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-100 text-sm transition-all outline-none font-medium text-slate-700 placeholder:text-slate-400"
+                            style={{
+                                width: '100%', padding: '16px 20px 16px 56px', background: '#f8fafc',
+                                border: '1px solid transparent', borderRadius: 16, fontSize: 15,
+                                color: '#0f172a', fontWeight: 500, outline: 'none', transition: 'all 0.2s',
+                                boxSizing: 'border-box'
+                            }}
+                            onFocus={e => { e.target.style.background = '#fff'; e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = '0 0 0 4px #f1f5f9'; }}
+                            onBlur={e => { e.target.style.background = '#f8fafc'; e.target.style.borderColor = 'transparent'; e.target.style.boxShadow = 'none'; }}
                             placeholder="Rechercher un client (nom, email)..."
                             type="text"
                             value={search}
@@ -61,79 +99,102 @@ const Clients = () => {
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                {/* Table container */}
+                <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #e2e8f0", boxShadow: '0 10px 30px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ borderCollapse: "collapse", width: "100%", textAlign: "left" }}>
                             <thead>
-                                <tr className="bg-slate-50/50 border-b border-slate-100">
-                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">Client</th>
-                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">Contact</th>
-                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">Activité</th>
-                                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                                    <th style={{ padding: "20px 24px", fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.04em" }}>Client</th>
+                                    <th style={{ padding: "20px 24px", fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.04em" }}>Contact</th>
+                                    <th style={{ padding: "20px 24px", fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.04em" }}>Activité</th>
+                                    <th style={{ padding: "20px 24px", fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#64748b", letterSpacing: "0.04em", textAlign: "right" }}>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-16 text-center text-slate-400">
-                                            <span className="material-symbols-outlined animate-spin text-slate-300 text-4xl block mb-3">autorenew</span>
-                                            <p className="text-sm font-medium">Chargement des clients...</p>
+                                        <td colSpan="4" style={{ padding: "64px 24px", textAlign: "center", color: "#94a3b8" }}>
+                                            <div style={{ fontSize: 15, fontWeight: 600 }}>Chargement des clients...</div>
                                         </td>
                                     </tr>
                                 ) : filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-16 text-center text-slate-400">
-                                            <span className="material-symbols-outlined text-5xl block mb-3 text-slate-200">group_off</span>
-                                            <p className="text-sm font-medium">Aucun client trouvé pour "{search}"</p>
+                                        <td colSpan="4" style={{ padding: "80px 24px", textAlign: "center" }}>
+                                            <div style={{ width: 64, height: 64, background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#94a3b8' }}>
+                                                <Users size={32} />
+                                            </div>
+                                            <div style={{ color: "#0f172a", fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Aucun client trouvé</div>
+                                            <div style={{ color: "#64748b", fontSize: 15 }}>Il n'y a pas de résultat pour "{search}".</div>
                                         </td>
                                     </tr>
                                 ) : (
                                     filtered.map((client) => (
                                         <tr key={client.id}
                                             onClick={() => navigate(`/admin/clients/${client.id}`, { state: { client } })}
-                                            className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                                            style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer", transition: "all 0.2s" }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.cells[3].querySelector('button').style.transform = 'translateX(4px)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.cells[3].querySelector('button').style.transform = 'none'; }}
                                         >
-                                            <td className="px-6 py-5 whitespace-nowrap">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform group-hover:bg-slate-900 group-hover:text-white text-slate-600">
-                                                        <span className="text-sm font-black">{getInitials(client.name)}</span>
+                                            <td style={{ padding: "20px 24px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                                    <div style={{
+                                                        width: 48, height: 48, background: '#f1f5f9', borderRadius: 16,
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        color: '#475569', fontSize: 15, fontWeight: 900
+                                                    }}>
+                                                        {getInitials(client.name)}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-900">{client.name}</p>
-                                                        <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                                                        <div style={{ color: "#0f172a", fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{client.name}</div>
+                                                        <span style={{ display: 'inline-block', background: '#f1f5f9', color: '#64748b', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                                             {client.role || 'Client'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5 whitespace-nowrap">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <div className="flex items-center gap-2 text-slate-600">
-                                                        <span className="material-symbols-outlined text-[16px] text-slate-400">mail</span>
-                                                        <p className="text-sm font-medium">{client.email}</p>
+                                            <td style={{ padding: "20px 24px" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#475569", fontSize: 14, fontWeight: 500 }}>
+                                                        <Mail size={16} color="#94a3b8" />
+                                                        {client.email}
                                                     </div>
-                                                    {client.driving_license_status === 'pending' && <span className="inline-flex w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Permis à vérifier</span>}
-                                                    {client.driving_license_status === 'approved' && <span className="inline-flex w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Permis Validé</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5 whitespace-nowrap">
-                                                <div className="flex items-center gap-6">
-                                                    <div>
-                                                        <span className="text-xs text-slate-400 font-medium block mb-1">Locations</span>
-                                                        <span className="text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded-md">{client.total_rentals || 0}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-xs text-slate-400 font-medium block mb-1">Dépenses</span>
-                                                        <span className="text-sm font-extrabold text-slate-900 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md tracking-tight">
-                                                            {Number(client.total_spent || 0).toLocaleString('fr-FR')} <span className="text-[10px] text-emerald-600/70 font-bold ml-0.5">TND</span>
+                                                    {client.driving_license_status === 'pending' && (
+                                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'max-content', background: '#fef3c7', color: '#d97706', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                                            <ShieldAlert size={14} /> Permis à vérifier
                                                         </span>
+                                                    )}
+                                                    {client.driving_license_status === 'approved' && (
+                                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'max-content', background: '#d1fae5', color: '#059669', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                                            <ShieldCheck size={14} /> Permis Validé
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: "20px 24px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+                                                    <div>
+                                                        <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Locations</div>
+                                                        <div style={{ color: "#0f172a", fontSize: 16, fontWeight: 800 }}>{client.total_rentals || 0}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>Dépenses</div>
+                                                        <div style={{ color: "#059669", fontSize: 16, fontWeight: 900, background: '#d1fae5', padding: '2px 8px', borderRadius: 8, display: 'inline-block' }}>
+                                                            {Number(client.total_spent || 0).toLocaleString('fr-FR')} <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981' }}>TND</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5 whitespace-nowrap text-right">
-                                                <button className="w-8 h-8 rounded-full hover:bg-white text-slate-400 hover:text-slate-900 hover:shadow-sm border border-transparent hover:border-slate-200 transition-all flex items-center justify-center ml-auto">
-                                                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                                            <td style={{ padding: "20px 24px", textAlign: "right" }}>
+                                                <button style={{
+                                                    width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer',
+                                                    marginLeft: 'auto', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#64748b'; }}
+                                                >
+                                                    <ChevronRight size={18} />
                                                 </button>
                                             </td>
                                         </tr>
@@ -142,16 +203,16 @@ const Clients = () => {
                             </tbody>
                         </table>
                     </div>
-
-                    <div className="px-6 py-4 bg-slate-50 flex items-center justify-between border-t border-slate-100">
-                        <p className="text-xs font-medium text-slate-500">
-                            {loading ? '...' : `Total: ${filtered.length} client(s)`}
-                        </p>
+                    
+                    <div style={{ padding: "16px 24px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", color: "#64748b", fontSize: 13, fontWeight: 600 }}>
+                        {loading ? '...' : `Total : ${filtered.length} client(s)`}
                     </div>
                 </div>
-
-
             </div>
+            
+            <style>{`
+                input::placeholder { color: #94a3b8; }
+            `}</style>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban, MapPin, Truck, AlertTriangle } from "lucide-react";
+import { Sparkles, Tag, Car, DollarSign, BarChart3, Key, MessageSquare, Calendar, Ban, MapPin, Truck, AlertTriangle, Fuel, Settings, Clock } from "lucide-react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import api from "../../../config/api.config";
 
@@ -50,6 +50,8 @@ export default function CarDetailPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [bookedDates, setBookedDates] = useState([]);
   const [userPoints, setUserPoints] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [adminHistory, setAdminHistory] = useState([]);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -60,6 +62,7 @@ export default function CarDetailPage() {
   // Delivery states
   const [deliveryRequested, setDeliveryRequested] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryTime, setDeliveryTime] = useState("");
   const [deliveryLat, setDeliveryLat] = useState(null);
   const [deliveryLng, setDeliveryLng] = useState(null);
   const [deliveryProcessing, setDeliveryProcessing] = useState(false);
@@ -72,9 +75,21 @@ export default function CarDetailPage() {
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
-      api.get("/users/me").then(r => setUserPoints(r.data.points)).catch(console.error);
+      api.get("/users/me").then(r => {
+        setUserPoints(r.data.points);
+        setUserRole(r.data.role);
+      }).catch(console.error);
     }
   }, []);
+
+  useEffect(() => {
+    if (userRole === 'admin' && id) {
+      const carId = id?.toString().split(":")[0];
+      api.get(`/rentals/car/${carId}`)
+        .then(r => setAdminHistory(r.data))
+        .catch(console.error);
+    }
+  }, [userRole, id]);
 
   useEffect(() => {
     injectDetailStyles();
@@ -155,6 +170,7 @@ export default function CarDetailPage() {
     if (!startDate || !endDate) return setMessage({ type: "error", text: "Veuillez sélectionner les dates." });
     if (new Date(startDate) < today) return setMessage({ type: "error", text: "La date de prise en charge ne peut pas être dans le passé." });
     if (new Date(endDate) <= new Date(startDate)) return setMessage({ type: "error", text: "La date de retour doit être après la date de prise en charge." });
+    if (deliveryRequested && !deliveryTime) return setMessage({ type: "error", text: "Veuillez préciser l'heure de livraison souhaitée." });
     setSubmitting(true);
     try {
       const payload = {
@@ -165,6 +181,7 @@ export default function CarDetailPage() {
       if (deliveryRequested) {
         payload.delivery_requested = true;
         payload.delivery_address = deliveryAddress;
+        payload.delivery_time = deliveryTime;
         if (deliveryLat && deliveryLng) {
           payload.delivery_lat = deliveryLat;
           payload.delivery_lng = deliveryLng;
@@ -339,11 +356,6 @@ export default function CarDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <Sparkles className="w-5 h-5 text-indigo-500" />
                 <h2 style={{ color: "#0a0a0a", fontSize: 18, fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>À propos de ce véhicule</h2>
-                <span style={{
-                  fontSize: 10, fontWeight: 800, background: 'rgba(200,169,110,0.12)',
-                  color: '#c8a96e', padding: '4px 10px', borderRadius: 6,
-                  letterSpacing: '0.08em', marginLeft: 8
-                }}>GÉNÉRÉ PAR L'IA</span>
               </div>
               <p style={{ color: "#555", fontSize: 15, margin: 0, lineHeight: 1.8 }}>
                 {car.description}
@@ -361,6 +373,8 @@ export default function CarDetailPage() {
                 { label: "Tarif", value: `${pricePerDay} TND ${isDiscounted ? '(VIP)' : ''}`, icon: <DollarSign className="w-4 h-4 text-slate-500" /> },
                 { label: "Disponibilité", value: car.available ? "Disponible" : "Indisponible", icon: <BarChart3 className="w-4 h-4 text-slate-500" /> },
                 { label: "Identifiant", value: `#${String(car.id).padStart(3, "0")}`, icon: <Key className="w-4 h-4 text-slate-500" /> },
+                { label: "Carburant", value: car.fuel_type || 'Non spécifié', icon: <Fuel className="w-4 h-4 text-slate-500" /> },
+                { label: "Boîte", value: car.transmission || 'Non spécifié', icon: <Settings className="w-4 h-4 text-slate-500" /> },
               ].map(({ label, value, icon }) => (
                 <div key={label} className="spec-item">
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -524,7 +538,7 @@ export default function CarDetailPage() {
                   <p style={{ fontSize: 12, color: '#666', marginBottom: 8, marginTop: -2 }}>
                     Entrez votre adresse ou cliquez directement sur la carte ci-dessous.
                   </p>
-                  <div style={{ position: 'relative', marginBottom: 12 }}>
+                  <div style={{ position: 'relative', marginBottom: 16 }}>
                     <MapPin className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: 12, top: 12 }} />
                     <input
                       type="text"
@@ -533,6 +547,20 @@ export default function CarDetailPage() {
                       onChange={e => setDeliveryAddress(e.target.value)}
                       onBlur={() => calculateDelivery()}
                       style={{ ...inputStyle, paddingLeft: 36 }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Clock className="w-3.5 h-3.5 text-slate-400" /> Heure de livraison souhaitée
+                    </label>
+                    <input
+                      type="time"
+                      value={deliveryTime}
+                      onChange={e => setDeliveryTime(e.target.value)}
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = '#0a0a0a'; e.target.style.boxShadow = '0 0 0 4px rgba(10,10,10,0.05)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#e5e5e5'; e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)'; }}
                     />
                   </div>
 
@@ -674,6 +702,63 @@ export default function CarDetailPage() {
           </div>
         </div>
       </div>
+
+      {userRole === 'admin' && adminHistory.length > 0 && (
+        <div style={{ maxWidth: 1280, margin: "48px auto 80px", padding: "0 24px" }} className="detail-section">
+          <div style={{ background: "#fff", borderRadius: 24, padding: "32px", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+            <h2 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
+                <AlertTriangle size={20} />
+              </div>
+              Historique des Locations (Vue Admin)
+            </h2>
+            
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
+                    <th style={{ padding: '16px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Client</th>
+                    <th style={{ padding: '16px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Période</th>
+                    <th style={{ padding: '16px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Statut</th>
+                    <th style={{ padding: '16px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminHistory.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 14 }}>{h.user_name || 'Client Inconnu'}</div>
+                        <div style={{ color: '#64748b', fontSize: 13 }}>{h.user_email}</div>
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569', fontSize: 13, fontWeight: 500 }}>
+                          <Calendar size={14} className="text-slate-400" />
+                          {new Date(h.start_date).toLocaleDateString('fr-FR')} - {new Date(h.end_date).toLocaleDateString('fr-FR')}
+                        </div>
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{ 
+                          display: 'inline-block', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                          background: h.status === 'completed' ? '#d1fae5' : h.status === 'cancelled' ? '#fee2e2' : h.status === 'ongoing' ? '#dbeafe' : '#fef3c7',
+                          color: h.status === 'completed' ? '#059669' : h.status === 'cancelled' ? '#dc2626' : h.status === 'ongoing' ? '#2563eb' : '#d97706'
+                        }}>
+                          {h.status === 'completed' ? 'Terminé' : h.status === 'cancelled' ? 'Annulé' : h.status === 'ongoing' ? 'En cours' : 'À venir'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
+                        <div style={{ color: '#0f172a', fontWeight: 800, fontSize: 15 }}>
+                          {Number(h.total_price || 0).toLocaleString('fr-FR')} <span style={{ fontSize: 12, color: '#94a3b8' }}>TND</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

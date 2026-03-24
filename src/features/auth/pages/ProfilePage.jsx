@@ -187,9 +187,9 @@ export default function ProfilePage() {
               {!editing
                 ? <button onClick={() => setEditing(true)} style={{ background: T.bg, border: `1px solid ${T.border}`, color: T.text, padding: "8px 18px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>✏️ Modifier</button>
                 : <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => { setEditing(false); setError(""); setForm({ name: profile?.name || "", email: profile?.email || "" }); }} style={{ background: "none", border: `1px solid ${T.border}`, color: T.muted, padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
-                    <button onClick={handleSave} disabled={saving} style={{ background: T.black, color: "#fff", border: "none", padding: "8px 18px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, fontFamily: "inherit" }}>{saving ? "Enregistrement…" : "✓ Sauvegarder"}</button>
-                  </div>
+                  <button onClick={() => { setEditing(false); setError(""); setForm({ name: profile?.name || "", email: profile?.email || "" }); }} style={{ background: "none", border: `1px solid ${T.border}`, color: T.muted, padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
+                  <button onClick={handleSave} disabled={saving} style={{ background: T.black, color: "#fff", border: "none", padding: "8px 18px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, fontFamily: "inherit" }}>{saving ? "Enregistrement…" : "✓ Sauvegarder"}</button>
+                </div>
               }
             </div>
             <div style={{ padding: "24px 28px" }}>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Search, DollarSign, Car, Sparkles, Gift } from "lucide-react";
+import { Search, DollarSign, Car, Sparkles, Gift, Mail, Phone, MapPin } from "lucide-react";
 import AiRecommendationCard from "../../recommendation/components/AiRecommendationCard";
 import api from "../../../config/api.config";
 import { Link } from "react-router-dom";
@@ -416,32 +416,103 @@ export default function CarsPage() {
           </div>
         </div>
 
-        {/* Loyalty Banner */}
+        {/* Loyalty Banner Redesign */}
         {userPoints !== null && (
           <div style={{
             background: userPoints >= 100
-              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.2) 100%)'
-              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.2) 100%)',
-            border: `1px solid ${userPoints >= 100 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
-            borderRadius: 16, padding: '20px 24px', marginBottom: 30,
-            display: 'flex', alignItems: 'center', gap: 16, animation: 'fadeUp 0.6s ease both'
+              ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+              : 'linear-gradient(135deg, #fff 0%, #fafafa 100%)',
+            border: userPoints >= 100 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : '1px solid #ebebeb',
+            borderRadius: 24, padding: '32px 40px', marginBottom: 40,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32,
+            boxShadow: userPoints >= 100 
+              ? '0 24px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)' 
+              : '0 12px 32px rgba(0,0,0,0.04)',
+            animation: 'fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+            position: 'relative', overflow: 'hidden'
           }}>
+            {/* Background Glow */}
             <div style={{
-              background: userPoints >= 100 ? '#10b981' : '#f59e0b',
-              width: 48, height: 48, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
-            }}>
-              <Gift size={24} />
+              position: 'absolute', top: -100, right: -50, width: 300, height: 300,
+              background: userPoints >= 100 
+                ? 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)'
+                : 'radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%)',
+              borderRadius: '50%', pointerEvents: 'none'
+            }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 320, zIndex: 1 }}>
+              <div style={{
+                background: userPoints >= 100 
+                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                  : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                width: 64, height: 64, borderRadius: 20,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                flexShrink: 0, boxShadow: userPoints >= 100 ? '0 8px 24px rgba(16,185,129,0.3)' : '0 8px 24px rgba(245,158,11,0.2)'
+              }}>
+                <Gift size={32} strokeWidth={2.5} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                  <h4 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: userPoints >= 100 ? '#fff' : '#000', letterSpacing: '-0.02em' }}>
+                    {userPoints >= 100 ? 'Statut VIP Débloqué !' : 'Programme de Fidélité BMZ'}
+                  </h4>
+                  <span style={{
+                    background: userPoints >= 100 ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.1)',
+                    color: userPoints >= 100 ? '#10b981' : '#d97706',
+                    padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em'
+                  }}>
+                    {userPoints >= 100 ? '-10% Actif' : 'Offre Exclusive'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 15, color: userPoints >= 100 ? '#94a3b8' : '#666', lineHeight: 1.6, fontWeight: 500 }}>
+                  {userPoints >= 100
+                    ? `Félicitations ! Vous bénéficiez d'une réduction de 10% sur tous vos prochains trajets.`
+                    : `Louez nos véhicules pour cumuler des points. À 100 points, débloquez une réduction garantie de 10% sur toute notre flotte !`}
+                </p>
+                
+                {/* Progress Bar for non-VIP */}
+                {userPoints < 100 && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#000', marginBottom: 6 }}>
+                      <span>Votre progression</span>
+                      <span style={{ color: '#d97706' }}>{userPoints} / 100 Points</span>
+                    </div>
+                    <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${Math.min(100, userPoints)}%`, 
+                        height: '100%', 
+                        background: 'linear-gradient(90deg, #fcd34d 0%, #f59e0b 100%)', 
+                        borderRadius: 4, transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' 
+                      }} />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h4 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: '#000', letterSpacing: '-0.01em' }}>
-                {userPoints >= 100 ? 'Félicitations, vous êtes VIP !' : 'Programme de Fidélité BMZ'}
-              </h4>
-              <p style={{ margin: 0, fontSize: 14, color: '#555', lineHeight: 1.5 }}>
-                {userPoints >= 100
-                  ? `Vos ${userPoints} points vous offrent automatiquement -10% de réduction sur TOUS nos véhicules lors de la finalisation.`
-                  : `Vous avez actuellement ${userPoints} points. Louez nos véhicules pour atteindre 100 points et débloquer -10% sur toute la flotte !`}
-              </p>
+
+            {/* CTA Button */}
+            <div style={{ zIndex: 1 }}>
+              <button onClick={() => {
+                heroRef.current?.scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => document.querySelector('input[placeholder="Search brand..."]')?.focus(), 500);
+              }} style={{
+                background: userPoints >= 100 ? '#fff' : '#000',
+                color: userPoints >= 100 ? '#0f172a' : '#fff',
+                border: 'none', padding: '16px 28px', borderRadius: 16,
+                fontSize: 15, fontWeight: 800, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 10,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: userPoints >= 100 ? '0 8px 20px rgba(255,255,255,0.1)' : '0 8px 24px rgba(0,0,0,0.15)',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = userPoints >= 100 ? '0 12px 28px rgba(255,255,255,0.15)' : '0 12px 32px rgba(0,0,0,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = userPoints >= 100 ? '0 8px 20px rgba(255,255,255,0.1)' : '0 8px 24px rgba(0,0,0,0.15)'; }}
+              >
+                {userPoints >= 100 ? 'Profiter de mon offre' : 'Louer pour cumuler'} 
+                <span style={{ fontSize: 18 }}>→</span>
+              </button>
             </div>
           </div>
         )}
@@ -493,6 +564,60 @@ export default function CarsPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ── About Us Section ───────────────────────────── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 40px 100px", display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ width: 60, height: 4, background: '#000', marginBottom: 24, borderRadius: 2 }} />
+        <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 24px', color: '#000' }}>
+          À Propos de <span style={{ background: 'linear-gradient(135deg, #000 0%, #555 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BMZ Rent Car</span>
+        </h2>
+        <p style={{ maxWidth: 700, fontSize: 16, color: '#666', lineHeight: 1.8, margin: '0 0 48px', fontWeight: 500 }}>
+          Chez BMZ Rent Car, nous redéfinissons l'expérience de la location automobile. Fondée sur la passion de l'automobile et l'excellence du service client, notre mission est de vous offrir plus qu'un simple véhicule : une véritable expérience de conduite premium. Que vous recherchiez l'élégance pour un événement spécial ou la fiabilité pour vos voyages d'affaires, notre flotte méticuleusement entretenue est à votre disposition.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32, width: '100%' }}>
+          {[
+            { icon: <Sparkles size={32} className="text-slate-800" />, title: 'Qualité Premium', desc: 'Une flotte entretenue avec la plus grande rigueur pour votre sécurité et votre confort.' },
+            { icon: <DollarSign size={32} className="text-slate-800" />, title: 'Tarifs Transparents', desc: 'Des offres claires sans frais cachés, pour vous permettre de voyager en toute sérénité.' },
+            { icon: <Car size={32} className="text-slate-800" />, title: 'Expérience Unique', desc: 'Un parcours de réservation fluide et un accompagnement personnalisé à chaque étape.' }
+          ].map((item, i) => (
+            <div key={i} style={{ padding: '40px 32px', background: '#fff', border: '1px solid #ebebeb', borderRadius: 24, transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'default' }}
+                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 24px 48px rgba(0,0,0,0.06)'; e.currentTarget.style.borderColor = '#000'; }}
+                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#ebebeb'; }}
+            >
+              <div style={{ width: 72, height: 72, background: '#f5f5f5', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                {item.icon}
+              </div>
+              <h3 style={{ fontSize: 19, fontWeight: 800, margin: '0 0 12px', color: '#000', letterSpacing: '-0.01em' }}>{item.title}</h3>
+              <p style={{ fontSize: 14, color: '#888', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', background: '#fafafa', padding: '32px 48px', borderRadius: 24, border: '1px solid #ebebeb', width: '100%', maxWidth: 840, marginTop: 48 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: '#000', margin: '0 0 8px' }}>Contactez-nous</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 600, color: '#444' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                <Phone size={18} />
+              </div>
+              <a href="tel:+21655123456" style={{ color: 'inherit', textDecoration: 'none' }}>+216 29 015 948</a>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 600, color: '#444' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                <Mail size={18} />
+              </div>
+              <a href="mailto:contact@bmz-rentcar.com" style={{ color: 'inherit', textDecoration: 'none' }}>contact@bmz-rentcar.com</a>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 600, color: '#444' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fff', border: '1px solid #eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                <MapPin size={18} />
+              </div>
+              Sousse Sahloul, Tunisie
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Shimmer animation */}

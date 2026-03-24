@@ -199,8 +199,13 @@ export default function AllRentalsPage() {
                                                     </div>
                                                     <div className="flex items-start gap-2 bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100">
                                                         <MapPin className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                                                        <div>
+                                                        <div className="flex-1">
                                                             <div className="text-xs font-semibold text-slate-700 leading-snug">{rental.delivery_address}</div>
+                                                            {rental.delivery_time && (
+                                                                <div className="text-[11px] font-bold text-slate-500 mt-1 flex items-center gap-1">
+                                                                    <Clock className="w-3 h-3 text-slate-400" /> Souhaitée à {rental.delivery_time}
+                                                                </div>
+                                                            )}
                                                             <div className="text-[10px] font-bold text-indigo-600 mt-1">
                                                                 Frais : {formatCurrency(Number(rental.delivery_fee || 0) + Number(rental.return_fee || 0))} DT (A/R)
                                                             </div>
