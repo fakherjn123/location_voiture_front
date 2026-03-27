@@ -38,6 +38,7 @@ export default function Navbar() {
 
   const navLinks = [
     { to: "/", label: "Fleet" },
+    ...(user?.role !== "admin" ? [{ to: "/contact", label: "Contact" }] : []),
     ...(user && user.role !== "admin"
       ? [
         { to: "/rentals", label: "My Rentals" },
@@ -54,6 +55,7 @@ export default function Navbar() {
         { to: "/admin/rentals", label: "Rentals" },
         { to: "/admin/factures", label: "Invoices" },
         { to: "/admin/services", label: "Maintenance" },
+        { to: "/admin/contacts", label: "Messages" },
         { to: "/admin/reviews", label: "Reviews" },
         { to: "/admin/hero", label: "Hero" },
       ]

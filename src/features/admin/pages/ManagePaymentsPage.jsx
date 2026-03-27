@@ -29,13 +29,28 @@ export default function ManagePaymentsPage() {
   useEffect(() => { fetchPayments(); }, []);
 
   const confirmCash = async (id) => {
-    if (!window.confirm("Confirm receiving this cash payment? This will generate the invoice and send a confirmation email to the client.")) return;
+    if (!window.confirm("Confirmer la réception de ce paiement en espèces ? Cela générera la facture et enverra un email de confirmation.")) return;
     setProcessingId(id);
     try {
       await api.put(`/payments/confirm-cash/${id}`);
       fetchPayments();
+      alert("Paiement validé avec succès !");
     } catch (err) {
-      alert(err.response?.data?.message || "Error confirming payment");
+      alert(err.response?.data?.message || "Erreur lors de la confirmation du paiement");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const rejectCash = async (id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir refuser ce paiement et annuler la réservation ? Un email sera envoyé au client.")) return;
+    setProcessingId(id);
+    try {
+      await api.put(`/payments/reject-cash/${id}`);
+      fetchPayments();
+      alert("Paiement et réservation refusés avec succès !");
+    } catch (err) {
+      alert(err.response?.data?.message || "Erreur lors du refus du paiement");
     } finally {
       setProcessingId(null);
     }
@@ -214,18 +229,32 @@ export default function ManagePaymentsPage() {
                       </td>
                       <td style={{ ...tdStyle, textAlign: "right" }}>
                         {p.status === "pending" && p.method === "cash" && !p.refund_status && (
-                          <button
-                            onClick={() => confirmCash(p.id)}
-                            disabled={processingId === p.id}
-                            style={{
-                              background: "#000", color: "#fff", border: "none",
-                              padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                              cursor: processingId === p.id ? "not-allowed" : "pointer",
-                              opacity: processingId === p.id ? 0.7 : 1
-                            }}
-                          >
-                            {processingId === p.id ? "Traitement..." : "Confirmer espèces"}
-                          </button>
+                          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                            <button
+                              onClick={() => confirmCash(p.id)}
+                              disabled={processingId === p.id}
+                              style={{
+                                background: "#000", color: "#fff", border: "none",
+                                padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                                cursor: processingId === p.id ? "not-allowed" : "pointer",
+                                opacity: processingId === p.id ? 0.7 : 1
+                              }}
+                            >
+                              {processingId === p.id ? "Traitement..." : "✓ Accepter"}
+                            </button>
+                            <button
+                              onClick={() => rejectCash(p.id)}
+                              disabled={processingId === p.id}
+                              style={{
+                                background: "#fff", color: "#dc2626", border: "1px solid #fecaca",
+                                padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                                cursor: processingId === p.id ? "not-allowed" : "pointer",
+                                opacity: processingId === p.id ? 0.7 : 1
+                              }}
+                            >
+                              ❌ Refuser
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>

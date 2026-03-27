@@ -158,7 +158,7 @@ export default function CarsPage() {
   const [filters, setFilters] = useState({ brand: "", maxPrice: "" });
   const [activeFilter, setActiveFilter] = useState('all');
   const [showAiRec, setShowAiRec] = useState(false);
-  const [userPoints, setUserPoints] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function CarsPage() {
     if (localStorage.getItem("token")) {
       try {
         const { data } = await api.get("/users/me");
-        setUserPoints(data.points);
+        setUserProfile(data);
       } catch (err) {
         console.error("User profile fetch error:", err);
       }
@@ -236,6 +236,8 @@ export default function CarsPage() {
     delay: `${i * 0.3}s`,
     size: 4 + (i % 3) * 2,
   }));
+
+  const userPoints = userProfile?.points ?? null;
 
   return (
     <div style={{ minHeight: "100vh", background: "#fdfdfd", paddingTop: 70, fontFamily: sans }}>
@@ -415,6 +417,36 @@ export default function CarsPage() {
             ))}
           </div>
         </div>
+
+        {/* Driving License Warning Banner */}
+        {userProfile && userProfile.driving_license_status !== 'approved' && (
+          <div style={{
+            background: '#fffbeb', border: '1px solid #fef08a', borderRadius: 24, padding: '24px 32px', marginBottom: 24,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24,
+            animation: 'fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1, minWidth: 320 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, boxShadow: '0 4px 12px rgba(245,158,11,0.1)' }}>
+                ⚠️
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#000', letterSpacing: '-0.01em', marginBottom: 4 }}>
+                  Permis de conduire requis
+                </h4>
+                <p style={{ margin: 0, fontSize: 14, color: '#666', lineHeight: 1.5, fontWeight: 500 }}>
+                  Afin de pouvoir réserver un véhicule, veuillez uploader votre permis de conduire sur votre profil.
+                </p>
+              </div>
+            </div>
+            <Link to="/profile" style={{
+              background: '#000', color: '#fff', padding: '12px 24px', borderRadius: 12,
+              fontSize: 14, fontWeight: 800, textDecoration: 'none', transition: 'box-shadow 0.2s, transform 0.2s',
+              display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0
+            }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.15)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}>
+              Mettre à jour mon profil <span style={{ fontSize: 16 }}>→</span>
+            </Link>
+          </div>
+        )}
 
         {/* Loyalty Banner Redesign */}
         {userPoints !== null && (

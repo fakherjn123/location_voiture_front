@@ -22,6 +22,8 @@ import ServicesPage from "../features/admin/pages/ServicesPage";
 import HeroBannerPage from "../features/admin/pages/HeroBannerPage";
 import ArchivedCarsPage from "../features/admin/pages/ArchivedCarsPage";
 import ProfilePage from "../features/auth/pages/ProfilePage";
+import ContactPage from "../features/contact/pages/ContactPage";
+import AdminContactPage from "../features/admin/pages/AdminContactPage";
 
 
 export default function Router() {
@@ -31,6 +33,7 @@ export default function Router() {
       <Routes>
         {/* PUBLIC */}
         <Route path="/" element={<CarsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/cars/:id" element={<CarDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -80,6 +83,9 @@ export default function Router() {
         } />
         <Route path="/admin/services" element={
           <ProtectedRoute role="admin"><ServicesPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/contacts" element={
+          <ProtectedRoute role="admin"><AdminContactPage /></ProtectedRoute>
         } />
         <Route path="/admin/clients" element={
           <ProtectedRoute role="admin"><ClientsPage /></ProtectedRoute>

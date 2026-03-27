@@ -63,6 +63,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [licenseMessage, setLicenseMessage] = useState({ text: "", type: "" });
   const animatedPoints = useCountUp(profile?.points || 0, 1200);
 
   useEffect(() => {
@@ -86,6 +88,30 @@ export default function ProfilePage() {
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de la mise à jour");
     } finally { setSaving(false); }
+  };
+
+  const handleLicenseUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("license", file);
+
+    setUploadingLicense(true);
+    setLicenseMessage({ text: "", type: "" });
+
+    try {
+      const res = await api.post("/users/upload-license", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setProfile((p) => ({ ...p, driving_license_url: res.data.driving_license_url, driving_license_status: "pending" }));
+      setLicenseMessage({ text: res.data.message || "Permis téléchargé avec succès. En attente de vérification.", type: "success" });
+      setTimeout(() => setLicenseMessage({ text: "", type: "" }), 5000);
+    } catch (err) {
+      setLicenseMessage({ text: err.response?.data?.message || "Erreur lors du téléchargement", type: "error" });
+    } finally {
+      setUploadingLicense(false);
+    }
   };
 
   if (loading) return (
@@ -206,6 +232,55 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* License Upload Section */}
+          <div style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 20, overflow: "hidden", marginBottom: 24, animation: "profileFadeUp 0.5s ease both 0.35s" }}>
+            <div style={{ padding: "20px 28px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 16, color: T.black }}>Permis de conduire & Statut Location</div>
+                <div style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>{profile?.driving_license_status === "approved" ? "Vous êtes autorisé à louer des véhicules." : "Ce document est requis pour autoriser vos locations."}</div>
+              </div>
+            </div>
+            <div style={{ padding: "24px 28px" }}>
+              {licenseMessage.text && <div style={{ background: licenseMessage.type === "success" ? "#f0fdf4" : "#fff5f5", border: `1px solid ${licenseMessage.type === "success" ? "#bbf7d0" : "#fecaca"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: licenseMessage.type === "success" ? T.success : T.danger, fontSize: 13 }}>{licenseMessage.text}</div>}
+              
+              {profile?.driving_license_url ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 16, background: profile?.driving_license_status === "approved" ? "#f0fdf4" : profile?.driving_license_status === "rejected" ? "#fff5f5" : "#fffbeb", border: `1px solid ${profile?.driving_license_status === "approved" ? "#bbf7d0" : profile?.driving_license_status === "rejected" ? "#fecaca" : "#fef08a"}`, padding: "16px", borderRadius: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                    {profile?.driving_license_status === "approved" ? "✅" : profile?.driving_license_status === "rejected" ? "❌" : "⏳"}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, fontSize: 14, color: T.black }}>
+                      {profile?.driving_license_status === "approved" ? "Permis validé (Location Autorisée)" : profile?.driving_license_status === "rejected" ? "Permis refusé (Location Bloquée)" : "En cours de vérification (Location Bloquée)"}
+                    </div>
+                    <div style={{ color: profile?.driving_license_status === "rejected" ? T.danger : T.muted, fontSize: 12, marginTop: 2 }}>
+                      {profile?.driving_license_status === "approved" ? "Votre permis a été vérifié. Vous pouvez louer un véhicule." : profile?.driving_license_status === "rejected" ? (profile?.driving_license_msg || "Document illisible ou non valide. Veuillez en fournir un nouveau.") : "Votre document est en cours d'examen. Vous ne pouvez pas encore louer de véhicule."}
+                    </div>
+                  </div>
+                  {profile?.driving_license_status !== "approved" && (
+                    <label style={{ background: T.white, border: `1px solid ${T.border}`, padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: uploadingLicense ? "not-allowed" : "pointer", color: T.text, opacity: uploadingLicense ? 0.7 : 1, textAlign: "center", flexShrink: 0 }}>
+                      {uploadingLicense ? "Chargement..." : "Mettre à jour"}
+                      <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handleLicenseUpload} disabled={uploadingLicense} />
+                    </label>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 16, background: "#fffbeb", border: "1px solid #fef08a", padding: "16px", borderRadius: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                    ⚠️
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, fontSize: 14, color: T.black }}>Permis manquant (Location Bloquée)</div>
+                    <div style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>Veuillez uploader votre permis pour vérifier votre profil et pouvoir louer un véhicule.</div>
+                  </div>
+                  <label style={{ background: T.black, color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: uploadingLicense ? "not-allowed" : "pointer", opacity: uploadingLicense ? 0.7 : 1, textAlign: "center", flexShrink: 0 }}>
+                    {uploadingLicense ? "Chargement..." : "Uploader un fichier"}
+                    <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handleLicenseUpload} disabled={uploadingLicense} />
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
